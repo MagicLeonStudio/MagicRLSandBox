@@ -1,4 +1,4 @@
-# RL Sandbox Tiny
+# MagicLeon's RL-SandBox
 
 <p align="center">
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" alt="React 19">
@@ -6,12 +6,10 @@
   <img src="https://img.shields.io/badge/Tailwind-3.4-06B6D4?logo=tailwindcss" alt="Tailwind CSS">
   <img src="https://img.shields.io/badge/Vite-7.2-646CFF?logo=vite" alt="Vite">
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
-  <img src="https://img.shields.io/badge/version-v0.7-purple" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.8-purple" alt="Version">
 </p>
 
 An interactive, browser-based reinforcement learning (RL) demonstration platform. From classic Q-Learning (1989) to modern PPO (2017) — watch AI agents learn in real-time through three sandbox games.
-
-**[Live Demo](https://n4lfyxzsxcx76.ok.kimi.link)**
 
 ## Features
 
