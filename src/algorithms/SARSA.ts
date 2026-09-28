@@ -1,43 +1,101 @@
 export class SARSA {
-  private qTable: number[][];
-  private stateSize: number;
-  private actionSize: number;
-  private alpha: number;
-  private gamma: number;
-  private epsilon: number;
-  private epsilonDecay: number;
-  private epsilonMin: number;
+  qTable: Map<string, number[]>;
+  learningRate: number;
+  epsilon: number;
+  epsilonDecay: number;
+  discount: number;
+  actionSize: number;
+  minEpsilon = 0.01;
 
   constructor(
-    stateSize: number,
+    _stateSize: number,
     actionSize: number,
-    alpha = 0.1,
-    gamma = 0.99,
-    epsilon = 1.0,
-    epsilonDecay = 0.995,
-    epsilonMin = 0.01
+    params: { learningRate: number; epsilon: number; discount: number; epsilonDecay?: number }
   ) {
-    this.stateSize = stateSize;
+    this.qTable = new Map();
+    this.learningRate = params.learningRate;
+    this.epsilon = params.epsilon;
+    this.discount = params.discount;
+    this.epsilonDecay = params.epsilonDecay ?? 0.995;
     this.actionSize = actionSize;
-    this.alpha = alpha;
-    this.gamma = gamma;
-    this.epsilon = epsilon;
-    this.epsilonDecay = epsilonDecay;
-    this.epsilonMin = epsilonMin;
-    this.qTable = Array.from({ length: stateSize }, () => Array(actionSize).fill(0));
   }
 
-  selectAction(state: number): number {
-    if (Math.random() < this.epsilon) {
+  private stateKey(state: number[]): string {
+    return state.map((v) => Math.round(v * 100) / 100).join(",");
+  }
+
+  private getQValues(state: number[]): number[] {
+    const key = this.stateKey(state);
+    if (!this.qTable.has(key)) {
+      this.qTable.set(key, new Array(this.actionSize).fill(0));
+    }
+    return this.qTable.get(key)!;
+  }
+
+  selectAction(state: number[], epsilonOverride?: number): number {
+    const eps = epsilonOverride ?? this.epsilon;
+    if (Math.random() < eps) {
       return Math.floor(Math.random() * this.actionSize);
     }
-    return this.qTable[state].indexOf(Math.max(...this.qTable[state]));
+    const qValues = this.getQValues(state);
+    let maxVal = -Infinity;
+    let bestAction = 0;
+    for (let i = 0; i < qValues.length; i++) {
+      if (qValues[i] > maxVal) {
+        maxVal = qValues[i];
+        bestAction = i;
+      }
+    }
+    return bestAction;
   }
 
-  train(state: number, action: number, reward: number, nextState: number, nextAction: number) {
-    const currentQ = this.qTable[state][action];
-    const nextQ = this.qTable[nextState][nextAction];
-    this.qTable[state][action] = currentQ + this.alpha * (reward + this.gamma * nextQ - currentQ);
-    this.epsilon = Math.max(this.epsilonMin, this.epsilon * this.epsilonDecay);
+  train(
+    state: number[],
+    action: number,
+    reward: number,
+    nextState: number[],
+    done: boolean
+  ): number {
+    const qValues = this.getQValues(state);
+
+    // SARSA: select next action using current policy
+    const nextAction = done ? action : this.selectAction(nextState);
+    const nextQValues = this.getQValues(nextState);
+    const nextQ = done ? 0 : nextQValues[nextAction];
+
+    const target = reward + this.discount * nextQ;
+    const tdError = target - qValues[action];
+    qValues[action] += this.learningRate * tdError;
+
+    // Decay epsilon
+    this.epsilon = Math.max(this.minEpsilon, this.epsilon * this.epsilonDecay);
+
+    return Math.abs(tdError);
+  }
+
+  getPolicy(): number[] {
+    const avgQ = new Array(this.actionSize).fill(0);
+    let count = 0;
+    this.qTable.forEach((qValues) => {
+      for (let i = 0; i < qValues.length; i++) {
+        avgQ[i] += qValues[i];
+      }
+      count++;
+    });
+    if (count > 0) {
+      for (let i = 0; i < avgQ.length; i++) {
+        avgQ[i] /= count;
+      }
+    }
+    // Softmax
+    const maxVal = Math.max(...avgQ);
+    const expQ = avgQ.map((v) => Math.exp(v - maxVal));
+    const sumExp = expQ.reduce((a, b) => a + b, 0);
+    return expQ.map((v) => v / sumExp);
+  }
+
+  reset(): void {
+    this.qTable.clear();
+    this.epsilon = 0.3;
   }
 }

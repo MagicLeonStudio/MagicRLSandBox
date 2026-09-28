@@ -1,41 +1,64 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 
-interface TrainingState {
-  rewards: number[];
-  losses: number[];
+export interface TrainingState {
   isTraining: boolean;
-  episode: number;
+  currentEpisode: number;
+  totalReward: number;
+  currentLoss: number;
+  rewardHistory: number[];
+  lossHistory: number[];
+  stepCount: number;
+  epsilon: number;
 }
 
-export function useTraining() {
-  const [state, setState] = useState<TrainingState>({
-    rewards: [],
-    losses: [],
-    isTraining: false,
-    episode: 0,
-  });
-  const stopRef = useRef(false);
+export interface TrainingActions {
+  startTraining: () => void;
+  stopTraining: () => void;
+  resetTraining: () => void;
+  setEpsilon: (epsilon: number) => void;
+}
 
-  const startTraining = useCallback(async (trainFn: () => Promise<{ reward: number; loss: number }>) => {
-    setState(s => ({ ...s, isTraining: true }));
-    stopRef.current = false;
+export function useTraining(): TrainingState & TrainingActions {
+  const [isTraining, setIsTraining] = useState(false);
+  const [currentEpisode, setCurrentEpisode] = useState(0);
+  const [totalReward, setTotalReward] = useState(0);
+  const [currentLoss, setCurrentLoss] = useState(0);
+  const [rewardHistory, setRewardHistory] = useState<number[]>([]);
+  const [lossHistory, setLossHistory] = useState<number[]>([]);
+  const [stepCount, setStepCount] = useState(0);
+  const [epsilon, setEpsilon] = useState(0.3);
 
-    while (!stopRef.current) {
-      const result = await trainFn();
-      setState(s => ({
-        ...s,
-        rewards: [...s.rewards, result.reward],
-        losses: [...s.losses, result.loss],
-        episode: s.episode + 1,
-      }));
-    }
-
-    setState(s => ({ ...s, isTraining: false }));
+  const startTraining = useCallback(() => {
+    setIsTraining(true);
   }, []);
 
   const stopTraining = useCallback(() => {
-    stopRef.current = true;
+    setIsTraining(false);
   }, []);
 
-  return { ...state, startTraining, stopTraining };
+  const resetTraining = useCallback(() => {
+    setIsTraining(false);
+    setCurrentEpisode(0);
+    setTotalReward(0);
+    setCurrentLoss(0);
+    setRewardHistory([]);
+    setLossHistory([]);
+    setStepCount(0);
+    setEpsilon(0.3);
+  }, []);
+
+  return {
+    isTraining,
+    currentEpisode,
+    totalReward,
+    currentLoss,
+    rewardHistory,
+    lossHistory,
+    stepCount,
+    epsilon,
+    startTraining,
+    stopTraining,
+    resetTraining,
+    setEpsilon,
+  };
 }
