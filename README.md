@@ -122,6 +122,15 @@ npm run build
 
 ## Changelog
 
+### v0.8 —— 专栏第 2–3 篇配套
+- 路由化：新增首页（算法矩阵导览）、教程体系（`/tutorials`）、训练场移至 `/playground`
+- 新增 DP 演示：`GridWorldModel` + `ValueIteration` + `PolicyIteration`（`src/dp/`）
+- 新增组件：`ValueHeatmap`（V 值热图 + 策略箭头）、`DPDemo`（sweep 动画）、`TeX`（KaTeX 公式）
+- 修复：GitHub 仓库基线补全为完整 v0.7 功能版
+- 修复：`base: './'` 下子路由资源 404（切换 HashRouter）
+- 修复：移除 Google Fonts 外部依赖；移除 `plugin-inspect-react-code` 调试插件
+- 工程：新增 `WORKFLOW.md`（专栏 × 沙盒工作流规定）
+
 ### v0.7
 - Widened sidebar to 520px for better parameter control
 - Fixed PPO numerical stability (gradient clipping, NaN guards)
