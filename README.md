@@ -11,6 +11,8 @@
 
 An interactive, browser-based reinforcement learning (RL) demonstration platform. From classic Q-Learning (1989) to modern PPO (2017) — watch AI agents learn in real-time through three sandbox games.
 
+**Companion column**: [「强化学习简史」 on Zhihu](https://www.zhihu.com/column/c_2087560950404728290) — every key algorithm in the column has a hands-on interactive demo here.
+
 ## Features
 
 - **3 Sandbox Games**
@@ -39,6 +41,11 @@ An interactive, browser-based reinforcement learning (RL) demonstration platform
   - Each algorithm has a dedicated info card with description
   - "Read More" modal with full technical explanation
   - Parameter configuration per algorithm
+
+- **Interactive Tutorials** (column companions)
+  - Each column article maps to a tutorial page (`/tutorials/:id`)
+  - KaTeX-rendered formulas (peco-equation compatible LaTeX subset)
+  - DP Demo: step-through Value Iteration / Policy Iteration on GridWorld with V-value heatmap, greedy policy arrows and Bellman-residual convergence curve
 
 ## Tech Stack
 
@@ -72,13 +79,23 @@ src/
     GridWorldEngine.ts # 5x5 grid navigation
     CartPoleEngine.ts  # Physics-based pole balancing
     SnakeEngine.ts     # 10x10 snake with 11-dim features
+  dp/                  # Dynamic programming demos (column articles 2-3)
+    GridWorldModel.ts  # Known model (transitions & rewards)
+    ValueIteration.ts  # Bellman optimality operator sweeps
+    PolicyIteration.ts # Policy evaluation + improvement
   data/
     algorithms.ts      # Algorithm metadata & parameters
+    tutorials.ts       # Tutorial pages synced with column articles
   pages/
-    Playground.tsx     # Main interactive page
+    Home.tsx           # Landing: column banner + algorithm matrix
+    Playground.tsx     # Main interactive training arena
+    tutorials/         # Tutorial list & detail pages
   components/
-    Navbar.tsx         # Header with game/algorithm selectors
-    Layout.tsx         # Page layout wrapper
+    ArenaNavbar.tsx    # Training-arena control bar (game/algorithm)
+    Navbar.tsx         # Site navigation
+    DPDemo.tsx         # VI/PI interactive demo
+    ValueHeatmap.tsx   # V-value heatmap with policy arrows
+    TeX.tsx            # KaTeX formula renderer
     RewardChart.tsx    # Real-time reward curve (raw + MA20)
     LossChart.tsx      # Real-time loss curve (raw + MA20)
 ```
@@ -120,14 +137,14 @@ npm run build
 
 ## Changelog
 
-### v0.8 —— 专栏第 2–3 篇配套
-- 路由化：新增首页（算法矩阵导览）、教程体系（`/tutorials`）、训练场移至 `/playground`
-- 新增 DP 演示：`GridWorldModel` + `ValueIteration` + `PolicyIteration`（`src/dp/`）
-- 新增组件：`ValueHeatmap`（V 值热图 + 策略箭头）、`DPDemo`（sweep 动画）、`TeX`（KaTeX 公式）
-- 修复：GitHub 仓库基线补全为完整 v0.7 功能版
-- 修复：`base: './'` 下子路由资源 404（切换 HashRouter）
-- 修复：移除 Google Fonts 外部依赖；移除 `plugin-inspect-react-code` 调试插件
-- 工程：新增 `WORKFLOW.md`（专栏 × 沙盒工作流规定）
+### v0.8 — Companion to Column Articles 2–3
+- Routing: new Home page (algorithm matrix), tutorial system at `/tutorials`, playground moved to `/playground`
+- New DP demo: `GridWorldModel` + `ValueIteration` + `PolicyIteration` (`src/dp/`)
+- New components: `ValueHeatmap` (V-value heatmap + policy arrows), `DPDemo` (sweep animation), `TeX` (KaTeX formulas)
+- Fix: GitHub baseline synced to the full v0.7 feature set
+- Fix: sub-route asset 404 under `base: './'` (switched to HashRouter)
+- Fix: removed Google Fonts dependency and the `plugin-inspect-react-code` debug plugin
+- Engineering: added `WORKFLOW.md` (column × sandbox workflow conventions)
 
 ### v0.7
 - Widened sidebar to 520px for better parameter control
