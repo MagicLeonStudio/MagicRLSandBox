@@ -5,13 +5,14 @@ import { tutorials } from "@/data/tutorials";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import columnCoverUrl from "../../assets/column-cover.png";
 
 export default function Home() {
   return (
     <div className="space-y-10">
       {/* Hero：专栏联动 Banner */}
       <section className="relative overflow-hidden rounded-2xl border border-border">
-        <img src="/column-cover.png" alt="强化学习简史专栏封面" className="w-full object-cover" />
+        <img src={columnCoverUrl} alt="强化学习简史专栏封面" className="w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent flex flex-col justify-center px-6 md:px-10">
           <Badge className="w-fit mb-3 bg-accent-yellow text-black hover:bg-accent-yellow">专栏配套沙盒</Badge>
           <h1 className="text-2xl md:text-4xl font-bold text-white leading-tight">
