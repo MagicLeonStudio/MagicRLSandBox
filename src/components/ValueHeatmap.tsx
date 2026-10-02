@@ -12,6 +12,7 @@ interface ValueHeatmapProps {
   showValues?: boolean;
   highlightPath?: number[]; // 收敛后最优路径高亮
   agentPos?: number;
+  wallTone?: "neutral" | "danger"; // danger: 带惩罚的障碍格渲染为红色（风险标注）
 }
 
 const C_LOW = [42, 24, 69];    // #2A1845 深紫
@@ -26,13 +27,14 @@ const ARROWS = ["▲", "▼", "◀", "▶"]; // 0上 1下 2左 3右
 
 export default function ValueHeatmap({
   size, values, policy, walls, goal, start = 0,
-  showValues = true, highlightPath, agentPos,
+  showValues = true, highlightPath, agentPos, wallTone = "neutral",
 }: ValueHeatmapProps) {
   const wallSet = walls instanceof Set ? walls : new Set(walls ?? []);
   const vmin = Math.min(...values);
   const vmax = Math.max(...values);
   const range = vmax - vmin || 1;
   const pathSet = new Set(highlightPath ?? []);
+  const danger = wallTone === "danger";
 
   return (
     <div
@@ -42,8 +44,16 @@ export default function ValueHeatmap({
       {values.map((v, s) => {
         if (wallSet.has(s)) {
           return (
-            <div key={s} className="aspect-square rounded-md bg-[#15151f] border border-border/40 flex items-center justify-center">
-              <span className="text-muted-foreground/40 text-xs">✕</span>
+            <div
+              key={s}
+              className={`aspect-square rounded-md flex items-center justify-center ${danger ? "" : "bg-[#15151f] border border-border/40"}`}
+              style={
+                danger
+                  ? { backgroundColor: "#4A1A22", border: "1px solid rgba(248,113,113,0.45)", boxShadow: "0 0 8px rgba(248,113,113,0.25)" }
+                  : undefined
+              }
+            >
+              <span className={danger ? "text-red-400 text-xs" : "text-muted-foreground/40 text-xs"}>✕</span>
             </div>
           );
         }

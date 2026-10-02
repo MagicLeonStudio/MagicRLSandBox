@@ -7,11 +7,15 @@ export class GridWorldModel {
   readonly size: number;
   readonly goal: number;
   readonly walls: Set<number>;
+  readonly stepPenalty: number;
+  readonly obstaclePenalty?: number;
 
-  constructor(size = 5, walls: number[] = []) {
+  constructor(size = 5, walls: number[] = [], stepPenalty = -0.01, obstaclePenalty?: number) {
     this.size = size;
     this.goal = size * size - 1;
     this.walls = new Set(walls);
+    this.stepPenalty = stepPenalty;
+    this.obstaclePenalty = obstaclePenalty;
   }
 
   get stateCount(): number {
@@ -45,8 +49,20 @@ export class GridWorldModel {
     return this.walls.has(ns) ? s : ns; // 撞墙（含障碍）则原地不动
   }
 
-  reward(_s: number, _a: number, ns: number): number {
+  reward(s: number, a: number, ns: number): number {
     if (this.isTerminal(ns)) return 10;
-    return -0.01;
+    // obstacle bump: intended cell is in-bounds but blocked; boundary bump keeps stepPenalty
+    if (ns === s && this.obstaclePenalty !== undefined) {
+      const row = Math.floor(s / this.size);
+      const col = s % this.size;
+      let r = row, c = col;
+      if (a === 0) r = row - 1;
+      else if (a === 1) r = row + 1;
+      else if (a === 2) c = col - 1;
+      else c = col + 1;
+      const inBounds = r >= 0 && r < this.size && c >= 0 && c < this.size;
+      if (inBounds && this.walls.has(r * this.size + c)) return this.obstaclePenalty;
+    }
+    return this.stepPenalty;
   }
 }
