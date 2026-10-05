@@ -3,8 +3,11 @@ import { ArrowLeft } from "lucide-react";
 import { tutorials } from "@/data/tutorials";
 import TeX from "@/components/TeX";
 import DPDemo from "@/components/DPDemo";
-import MDPDemo from "@/components/MDPDemo";
+import MCTDDemo from "@/components/MCTDDemo";
+import ValueHeatmap from "@/components/ValueHeatmap";
 import { Button } from "@/components/ui/button";
+
+const ZERO25 = new Array(25).fill(0);
 
 export default function TutorialDetail() {
   const { id } = useParams();
@@ -47,7 +50,12 @@ export default function TutorialDetail() {
           <p className="text-foreground/90 leading-relaxed text-[15px]">{sec.body}</p>
           {sec.formula && <TeX math={sec.formula} block />}
           {sec.demo === "dp" && <DPDemo />}
-          {sec.demo === "mdp" && <MDPDemo />}
+          {sec.demo === "mctd" && <MCTDDemo />}
+          {sec.demo === "mdp" && (
+            <div className="flex justify-center bg-black/30 rounded-lg p-4">
+              <ValueHeatmap size={5} values={ZERO25} goal={24} showValues={false} />
+            </div>
+          )}
         </section>
       ))}
     </div>

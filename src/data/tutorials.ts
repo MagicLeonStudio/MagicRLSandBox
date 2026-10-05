@@ -3,7 +3,7 @@ export interface TutorialSection {
   heading: string;
   body: string;
   formula?: string;       // KaTeX 渲染
-  demo?: "dp" | "mdp";    // 嵌入的交互演示组件
+  demo?: "dp" | "mdp" | "mctd";    // 嵌入的交互演示组件
 }
 
 export interface Tutorial {
@@ -30,6 +30,7 @@ export const tutorials: Tutorial[] = [
         heading: "五元组 ⟨S, A, P, R, γ⟩",
         body: "马尔可夫决策过程（MDP）是强化学习的问题语言。智能体在状态 s ∈ S 下依据策略 π 选择动作 a ∈ A，环境按转移核 P(s′|s,a) 给出下一状态与奖励 r ∼ R(s,a)。折扣因子 γ ∈ [0,1) 决定未来奖励的现值。马尔可夫性意味着下一状态只依赖当前状态与动作，与历史无关。",
         formula: "M=\\langle\\mathcal{S},\\mathcal{A},P,R,\\gamma\\rangle",
+        demo: "mdp",
       },
       {
         heading: "回报与目标",
@@ -38,8 +39,7 @@ export const tutorials: Tutorial[] = [
       },
       {
         heading: "GridWorld：最小的 MDP 试验场",
-        body: "下面是一个 5×5 GridWorld：左上角为起点 S，右下角 ★ 为目标（奖励 +10），中间散落着红色障碍（撞上 −5 并原地不动），每走一步付出 −0.1 的时间惩罚，撞墙同样原地不动。它小到你口算就能验证，却包含 MDP 的全部要素——状态、动作、转移、奖励、折扣。亲手走几局试试：最优策略会贴着墙走还是对角走？每步 −0.1 的惩罚在塑造策略形状上起了什么作用？本沙盒中的动态规划与 TD 算法都会在这座小世界里演示。",
-        demo: "mdp",
+        body: "下面是一个 5×5 GridWorld：左上角为起点 S，右下角 ★ 为目标（奖励 +10），每走一步付出 −0.01 的小惩罚，撞墙则原地不动。它小到你口算就能验证，却包含 MDP 的全部要素。本沙盒中的动态规划与 TD 算法都会在这座小世界里演示。",
       },
     ],
   },
@@ -70,6 +70,25 @@ export const tutorials: Tutorial[] = [
       {
         heading: "维度灾难：历史的反击",
         body: "DP 要求已知模型 P、R 且状态有限。状态数随变量数指数爆炸（Bellman 称之为 curse of dimensionality），这正是后文采样方法（MC/TD）、函数逼近与深度学习登场的历史动力。",
+      },
+    ],
+  },
+  {
+    id: "mc-td",
+    no: 4,
+    title: "MC 与 TD：不依赖模型的两种人生",
+    subtitle: "蒙特卡洛等结局，时序差分走一步看一步",
+    act: "第二幕 · 经典三支柱",
+    ready: false,
+    sections: [
+      {
+        heading: "扔掉模型：从经验中估计价值",
+        body: "动态规划要求已知环境模型 P 与 R——现实中这几乎是奢望。本篇固定一个策略，仅凭采样轨迹估计它的价值函数：蒙特卡洛（MC）等到 episode 结束用实际回报 G 更新（无偏但高方差）；时序差分（TD）每走一步就用 bootstrap 目标立即更新（低方差但有偏）。下方演示让同一条轨迹同时喂给 MC、TD(0) 与 TD(λ)，左图是两组价值地图的对照，右图是起点价值估计随轨迹数的学习曲线（白色虚线为 DP 真值）。",
+      },
+      {
+        heading: "三种估计器的同场竞技",
+        body: "拖动 λ 滑杆：λ=0 是纯 TD(0)，λ→1 逐渐靠近 MC。注意学习曲线的抖动差异——MC 的锯齿来自完整回报的方差，TD 的平滑来自 bootstrap；而当 α 取常数步长时，TD 的渐近线不再完全贴住真值，这正是「有偏但低方差」的代价。",
+        demo: "mctd",
       },
     ],
   },
