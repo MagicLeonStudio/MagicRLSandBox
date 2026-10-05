@@ -1,4 +1,4 @@
-# MagicLeon's RL-SandBox
+# RL Sandbox Tiny
 
 <p align="center">
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" alt="React 19">
@@ -6,12 +6,12 @@
   <img src="https://img.shields.io/badge/Tailwind-3.4-06B6D4?logo=tailwindcss" alt="Tailwind CSS">
   <img src="https://img.shields.io/badge/Vite-7.2-646CFF?logo=vite" alt="Vite">
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
-  <img src="https://img.shields.io/badge/version-v0.8-purple" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.9-purple" alt="Version">
 </p>
 
 An interactive, browser-based reinforcement learning (RL) demonstration platform. From classic Q-Learning (1989) to modern PPO (2017) — watch AI agents learn in real-time through three sandbox games.
 
-**Companion column**: [「强化学习简史」 on Zhihu](https://www.zhihu.com/column/c_2087560950404728290) — every key algorithm in the column has a hands-on interactive demo here.
+**[Live Demo](https://n4lfyxzsxcx76.ok.kimi.link)**
 
 ## Features
 
@@ -41,11 +41,6 @@ An interactive, browser-based reinforcement learning (RL) demonstration platform
   - Each algorithm has a dedicated info card with description
   - "Read More" modal with full technical explanation
   - Parameter configuration per algorithm
-
-- **Interactive Tutorials** (column companions)
-  - Each column article maps to a tutorial page (`/tutorials/:id`)
-  - KaTeX-rendered formulas (peco-equation compatible LaTeX subset)
-  - DP Demo: step-through Value Iteration / Policy Iteration on GridWorld with V-value heatmap, greedy policy arrows and Bellman-residual convergence curve
 
 ## Tech Stack
 
@@ -79,23 +74,13 @@ src/
     GridWorldEngine.ts # 5x5 grid navigation
     CartPoleEngine.ts  # Physics-based pole balancing
     SnakeEngine.ts     # 10x10 snake with 11-dim features
-  dp/                  # Dynamic programming demos (column articles 2-3)
-    GridWorldModel.ts  # Known model (transitions & rewards)
-    ValueIteration.ts  # Bellman optimality operator sweeps
-    PolicyIteration.ts # Policy evaluation + improvement
   data/
     algorithms.ts      # Algorithm metadata & parameters
-    tutorials.ts       # Tutorial pages synced with column articles
   pages/
-    Home.tsx           # Landing: column banner + algorithm matrix
-    Playground.tsx     # Main interactive training arena
-    tutorials/         # Tutorial list & detail pages
+    Playground.tsx     # Main interactive page
   components/
-    ArenaNavbar.tsx    # Training-arena control bar (game/algorithm)
-    Navbar.tsx         # Site navigation
-    DPDemo.tsx         # VI/PI interactive demo
-    ValueHeatmap.tsx   # V-value heatmap with policy arrows
-    TeX.tsx            # KaTeX formula renderer
+    Navbar.tsx         # Header with game/algorithm selectors
+    Layout.tsx         # Page layout wrapper
     RewardChart.tsx    # Real-time reward curve (raw + MA20)
     LossChart.tsx      # Real-time loss curve (raw + MA20)
 ```
@@ -136,6 +121,11 @@ npm run build
 | PPO | 2017 | Policy Gradient | Cart Pole, Snake | Clipped surrogate objective |
 
 ## Changelog
+
+### v0.9 — Companion to Column Article 4 (MC vs TD)
+- New MC vs TD demo (`/tutorials/mc-td`): identical trajectories fed to first-visit MC, TD(0) and TD(lambda); dual value-map comparison on a unified color scale; V(s0) learning curve with DP reference line; gamma / alpha / lambda sliders
+- New module `src/dp/MCTD.ts`: seeded RNG for reproducible trajectories, first-visit MC, TD(0), TD(lambda) with accumulating eligibility traces, exact policy evaluation as reference
+- `ValueHeatmap`: optional vmin/vmax props for comparable color scales across maps
 
 ### v0.8 — Companion to Column Articles 2–3
 - Routing: new Home page (algorithm matrix), tutorial system at `/tutorials`, playground moved to `/playground`
