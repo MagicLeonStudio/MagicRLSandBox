@@ -29,7 +29,7 @@
 |---|---|---|
 | v0.7 | 训练场基础（8 算法 × 3 环境） | Released |
 | v0.8 | 第 2–3 篇（MDP、Bellman 与 DP） | Released |
-| v0.9 | 第 4 篇（MC/TD） | Released（第 5 篇配套开发中） |
+| v0.9 | 第 4–5 篇（MC/TD、Q-learning/SARSA 悬崖行走） | Released |
 | v1.0 | 第 6–8 篇（策略梯度、TRPO/PPO、DQN） | 规划 |
 | v1.1 | 第 9–11 篇（AlphaGo、模型基、探索） | 规划 |
 | v1.2 | 第 12–15 篇（RLHF 时代） | 规划 |
@@ -40,7 +40,7 @@
 
 - **Commit messages must be in English** — no Chinese in git history. Reference the column article number, e.g. `feat(mc-td): seeded RNG, first-visit MC, TD estimators (column #4)`；
 - 仓库的提交历史即第二条"简史时间线"；
-- 教程数据在 `src/data/tutorials.ts`，每篇教程的 demo 组件按场景注册（`demo: "dp" | "mdp" | "mctd" | ...`）。
+- 教程数据在 `src/data/tutorials.ts`，每篇教程的 demo 组件按场景注册（`demo: "dp" | "mdp" | "mctd" | "cliff" | ...`）。
 
 ## 技术约定
 

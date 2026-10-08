@@ -122,8 +122,9 @@ npm run build
 
 ## Changelog
 
-### v0.9 — Companion to Column Article 4 (MC vs TD)
+### v0.9 — Companion to Column Articles 4–5 (MC/TD, Q-learning/SARSA)
 - New MC vs TD demo (`/tutorials/mc-td`): identical trajectories fed to first-visit MC, TD(0) and TD(lambda); dual value-map comparison on a unified color scale; V(s0) learning curve with DP reference line; gamma / alpha / lambda sliders
+- New Cliff Walking demo (`/tutorials/q-learning`): tabular Q-learning vs SARSA on the Sutton & Barto Example 6.6 grid; dual greedy-policy maps (optimal-but-risky vs safe-detour); online performance curves on matched seeds; epsilon / alpha sliders
 - New module `src/dp/MCTD.ts`: seeded RNG for reproducible trajectories, first-visit MC, TD(0), TD(lambda) with accumulating eligibility traces, exact policy evaluation as reference
 - `ValueHeatmap`: optional vmin/vmax props for comparable color scales across maps
 
