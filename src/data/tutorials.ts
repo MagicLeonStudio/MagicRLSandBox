@@ -3,7 +3,7 @@ export interface TutorialSection {
   heading: string;
   body: string;
   formula?: string;       // KaTeX 渲染
-  demo?: "dp" | "mdp" | "mctd";    // 嵌入的交互演示组件
+  demo?: "dp" | "mdp" | "mctd" | "cliff";    // 嵌入的交互演示组件
 }
 
 export interface Tutorial {
@@ -89,6 +89,25 @@ export const tutorials: Tutorial[] = [
         heading: "三种估计器的同场竞技",
         body: "拖动 λ 滑杆：λ=0 是纯 TD(0)，λ→1 逐渐靠近 MC。注意学习曲线的抖动差异——MC 的锯齿来自完整回报的方差，TD 的平滑来自 bootstrap；而当 α 取常数步长时，TD 的渐近线不再完全贴住真值，这正是「有偏但低方差」的代价。",
         demo: "mctd",
+      },
+    ],
+  },
+  {
+    id: "q-learning",
+    no: 5,
+    title: "Q-learning（1989）：一张表格开启的离策略革命",
+    subtitle: "悬崖行走：Q-learning 与 SARSA 的两种路径",
+    act: "第二幕 · 经典三支柱",
+    ready: false,
+    sections: [
+      {
+        heading: "从评估到控制：Q 的引入",
+        body: "MC 与 TD 解决的是「评估」：给定策略，估计它的价值。控制问题要更进一步：改进策略直至最优。1989 年 Watkins 的洞见是把估计对象从 V(s) 换成 Q(s,a)——动作价值函数，于是贪心化不再需要环境模型：argmax_a Q(s,a) 直接给出改进方向。下方演示在悬崖行走环境（Sutton & Barto 例 6.6）上同屏训练 Q-learning（off-policy：用下一状态的最大 Q 构造目标）与 SARSA（on-policy：用实际执行的下一动作构造目标）。",
+      },
+      {
+        heading: "悬崖行走：on-policy 与 off-policy 的分岔",
+        body: "拖动 ε 滑杆观察分岔：Q-learning 学到贴着悬崖的最短路径（贪心最优，但在线探索时频繁掉落）；SARSA 学到远离悬崖的保守路径（次优，但在 ε-greedy 探索下几乎不掉落）。金色曲线与紫色曲线的在线差距，就是「最优」与「安全」的量化对照。",
+        demo: "cliff",
       },
     ],
   },
