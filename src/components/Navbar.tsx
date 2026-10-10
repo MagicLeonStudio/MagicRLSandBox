@@ -10,11 +10,11 @@ const navItems = [
 export default function Navbar() {
   return (
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4 h-14 flex items-center justify-between gap-4">
+      <div className="w-full px-4 h-14 flex items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-2">
           <img src={logoUrl} alt="Magic Leon Studio" className="h-8 w-auto" />
           <span className="font-bold text-xl text-accent-yellow">MagicRL SandBox</span>
-          <span className="text-muted-foreground text-xs font-mono hidden sm:inline">v0.8</span>
+          <span className="text-muted-foreground text-xs font-mono hidden sm:inline">v0.9</span>
         </Link>
         <div className="flex items-center gap-1">
           {navItems.map(item => (
