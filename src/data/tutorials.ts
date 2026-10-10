@@ -3,7 +3,7 @@ export interface TutorialSection {
   heading: string;
   body: string;
   formula?: string;       // KaTeX 渲染
-  demo?: "dp" | "mdp" | "mctd" | "cliff";    // 嵌入的交互演示组件
+  demo?: "dp" | "mdp" | "mctd" | "cliff" | "pg";    // 嵌入的交互演示组件
 }
 
 export interface Tutorial {
@@ -108,6 +108,25 @@ export const tutorials: Tutorial[] = [
         heading: "悬崖行走：on-policy 与 off-policy 的分岔",
         body: "拖动 ε 滑杆观察分岔：Q-learning 学到贴着悬崖的最短路径（贪心最优，但在线探索时频繁掉落）；SARSA 学到远离悬崖的保守路径（次优，但在 ε-greedy 探索下几乎不掉落）。金色曲线与紫色曲线的在线差距，就是「最优」与「安全」的量化对照。",
         demo: "cliff",
+      },
+    ],
+  },
+  {
+    id: "policy-gradient",
+    no: 6,
+    title: "策略梯度定理：当 RL 学会「直接优化」",
+    subtitle: "REINFORCE：不再估值，直接塑造行为",
+    act: "第二幕 · 经典三支柱",
+    ready: false,
+    sections: [
+      {
+        heading: "绕开 argmax：直接对策略求导",
+        body: "前几篇的价值观方法都在回答「哪个动作更好」，策略梯度换了一个问法：直接参数化策略 π_θ(a|s)，沿着让期望回报变大的方向调整 θ。REINFORCE 用整条轨迹的回报 G 加权每个动作的 log 概率梯度——好轨迹里的动作被推高，差的被压低。下方演示在 GridWorld 上训练一个 softmax 策略：左侧策略地图的贪心箭头随训练从混乱收敛为最优路径，右下角的分解视图逐步展示 ∇log π · (G − b) 的贡献。",
+      },
+      {
+        heading: "baseline 的方差魔术",
+        body: "开关 baseline 对比两条训练曲线：baseline（回报的移动平均）不改变梯度的期望方向，却能显著压低蒙特卡洛回报的方差。这是理解「方差约减不改无偏性」最直观的现场实验。",
+        demo: "pg",
       },
     ],
   },
