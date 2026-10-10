@@ -2,9 +2,11 @@ import { Link } from "react-router";
 import { ArrowRight, ExternalLink } from "lucide-react";
 import { algorithms } from "@/data/algorithms";
 import { tutorials } from "@/data/tutorials";
+import { releases } from "@/data/releases";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import columnCoverUrl from "../../assets/column-cover.png";
 
 export default function Home() {
@@ -92,6 +94,44 @@ export default function Home() {
               </Card>
             </Link>
           ))}
+        </div>
+      </section>
+
+      {/* 版本节奏（与 WORKFLOW.md 同步） */}
+      <section className="space-y-4">
+        <div className="flex items-end justify-between">
+          <div>
+            <h2 className="text-xl font-bold">版本节奏</h2>
+            <p className="text-sm text-muted-foreground mt-1">大版本随专栏幕次推进，每个 Release 对应一组篇目</p>
+          </div>
+        </div>
+        <div className="rounded-xl border border-border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-20">版本</TableHead>
+                <TableHead>配套篇目</TableHead>
+                <TableHead className="w-24 text-right">状态</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {releases.map(r => (
+                <TableRow key={r.version} className={r.status === "current" ? "bg-accent-purple/10" : undefined}>
+                  <TableCell className="font-mono text-accent-yellow">{r.version}</TableCell>
+                  <TableCell className="text-sm">{r.scope}</TableCell>
+                  <TableCell className="text-right">
+                    {r.status === "current" ? (
+                      <Badge className="bg-accent-yellow text-black hover:bg-accent-yellow">当前版本</Badge>
+                    ) : r.status === "released" ? (
+                      <Badge variant="secondary">已发布</Badge>
+                    ) : (
+                      <Badge variant="outline">规划</Badge>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </section>
 
