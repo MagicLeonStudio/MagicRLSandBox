@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/Tailwind-3.4-06B6D4?logo=tailwindcss" alt="Tailwind CSS">
   <img src="https://img.shields.io/badge/Vite-7.2-646CFF?logo=vite" alt="Vite">
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
-  <img src="https://img.shields.io/badge/version-v0.9-purple" alt="Version">
+  <img src="https://img.shields.io/badge/version-v1.0-purple" alt="Version">
 </p>
 
 An interactive, browser-based reinforcement learning (RL) demonstration platform. From classic Q-Learning (1989) to modern PPO (2017) — watch AI agents learn in real-time through three sandbox games.
@@ -121,6 +121,10 @@ npm run build
 | PPO | 2017 | Policy Gradient | Cart Pole, Snake | Clipped surrogate objective |
 
 ## Changelog
+
+### v1.0 — Companion to Column Articles 6–8 (in development)
+- New Policy Gradient demo (`/tutorials/policy-gradient`): softmax policy + REINFORCE with optional baseline on GridWorld (`src/dp/PolicyGrad.ts`); policy-map evolution during training, baseline on/off comparison of learning curves, per-step decomposition of grad-log-prob × (G − b)
+- Version bumped ahead of release: v1.0 ships when column articles 6–8 are complete
 
 ### v0.9 — Companion to Column Articles 4–5 (MC/TD, Q-learning/SARSA)
 - New MC vs TD demo (`/tutorials/mc-td`): identical trajectories fed to first-visit MC, TD(0) and TD(lambda); dual value-map comparison on a unified color scale; V(s0) learning curve with DP reference line; gamma / alpha / lambda sliders

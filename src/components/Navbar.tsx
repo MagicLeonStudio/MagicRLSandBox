@@ -14,7 +14,7 @@ export default function Navbar() {
         <Link to="/" className="flex items-center gap-2">
           <img src={logoUrl} alt="Magic Leon Studio" className="h-8 w-auto" />
           <span className="font-bold text-xl text-accent-yellow">MagicRL SandBox</span>
-          <span className="text-muted-foreground text-xs font-mono hidden sm:inline">v0.9</span>
+          <span className="text-muted-foreground text-xs font-mono hidden sm:inline">v1.0</span>
         </Link>
         <div className="flex items-center gap-1">
           {navItems.map(item => (
