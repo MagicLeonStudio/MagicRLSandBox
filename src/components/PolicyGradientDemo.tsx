@@ -49,6 +49,7 @@ export default function PolicyGradientDemo() {
   const rfNRef = useRef<REINFORCE | null>(null); // baseline off（对照）
   const rngBRef = useRef<() => number>(() => 0);
   const rngNRef = useRef<() => number>(() => 0);
+  const useBaselineRef = useRef(true); // 供 runEpisode 回调读取当前显示组
 
   function initView(): View {
     return {
@@ -84,23 +85,26 @@ export default function PolicyGradientDemo() {
     const trajN = sampleEpisodeWithPolicy(m, rfN.policy, rngNRef.current);
     rfN.observeEpisode(m, trajN, GAMMA);
 
-    // 主角（baseline on）的分解视图
-    const G = discountedReturns(trajB, GAMMA);
-    const b = rfB.baseline;
-    const decomp: StepDecomp[] = trajB.actions.map((a, t) => ({
-      t, s: trajB.states[t], a, G: G[t], adv: G[t] - b,
+    // 主角由开关选择：baseline 开 / 关 组
+    const useB = useBaselineRef.current;
+    const rfMain = useB ? rfB : rfN;
+    const trajMain = useB ? trajB : trajN;
+    const G = discountedReturns(trajMain, GAMMA);
+    const b = useB ? rfB.baseline : 0;
+    const decomp: StepDecomp[] = trajMain.actions.map((a, t) => ({
+      t, s: trajMain.states[t], a, G: G[t], adv: G[t] - b,
     })).slice(-14); // 最近 14 步
 
-    const path = [...trajB.states];
+    const path = [...trajMain.states];
     setView(prev => {
       const ep = prev.ep + 1;
       const history = [...prev.history, { ep, withB: infoB.steps, withoutB: trajN.states.length - 1 }];
       if (history.length > 400) history.shift();
       return {
-        pi: rfB.policy.greedyPolicy(m),
+        pi: rfMain.policy.greedyPolicy(m),
         path,
         ep, history,
-        lastSteps: infoB.steps,
+        lastSteps: trajMain.rewards.length,
         decomp, baseline: b,
       };
     });
@@ -128,12 +132,12 @@ export default function PolicyGradientDemo() {
         <div className="space-y-3">
           <div>
             <div className="text-xs text-accent-yellow font-semibold mb-1">
-              策略地图（贪心动作箭头 · 随训练演化）{!useBaseline && " · baseline 关闭"}
+              策略地图（贪心动作箭头 · 随训练演化）· 当前显示：{useBaseline ? "有 baseline" : "无 baseline"}组
             </div>
             <div className="flex justify-center bg-black/30 rounded-lg p-3">
               <ValueHeatmap
                 size={5}
-                values={view.pi.map((a, s) => (a >= 0 ? rfBRef.current?.policy.probs(s)[a] ?? 0 : 0))}
+                values={view.pi.map((a, s) => (a >= 0 ? (useBaseline ? rfBRef.current : rfNRef.current)?.policy.probs(s)[a] ?? 0 : 0))}
                 policy={view.pi}
                 walls={WALLS}
                 goal={24}
@@ -169,11 +173,13 @@ export default function PolicyGradientDemo() {
               size="sm"
               variant={useBaseline ? "default" : "outline"}
               onClick={() => {
-                setUseBaseline(!useBaseline);
+                const nv = !useBaseline;
+                setUseBaseline(nv);
+                useBaselineRef.current = nv;
                 reset(alpha);
               }}
             >
-              baseline {useBaseline ? "开" : "关"}（当前显示：{useBaseline ? "开" : "关"}组）
+              显示组：baseline {useBaseline ? "开" : "关"}
             </Button>
             <span className="text-xs text-text-muted">b = {view.baseline.toFixed(2)}</span>
           </div>
