@@ -3,7 +3,7 @@ export interface TutorialSection {
   heading: string;
   body: string;
   formula?: string;       // KaTeX 渲染
-  demo?: "dp" | "mdp" | "mctd" | "cliff" | "pg";    // 嵌入的交互演示组件
+  demo?: "dp" | "mdp" | "mctd" | "cliff" | "pg" | "ppo";    // 嵌入的交互演示组件
 }
 
 export interface Tutorial {
@@ -127,6 +127,25 @@ export const tutorials: Tutorial[] = [
         heading: "baseline 的方差魔术",
         body: "开关 baseline 对比两条训练曲线：baseline（回报的移动平均）不改变梯度的期望方向，却能显著压低蒙特卡洛回报的方差。这是理解「方差约减不改无偏性」最直观的现场实验。",
         demo: "pg",
+      },
+    ],
+  },
+  {
+    id: "ppo",
+    no: 7,
+    title: "从 TRPO 到 PPO：深度 RL 的工程底座是如何浇筑的",
+    subtitle: "信赖域、重要性采样与一剪刀的智慧",
+    act: "第二幕 · 经典三支柱",
+    ready: false,
+    sections: [
+      {
+        heading: "步长灾难与信赖域思想",
+        body: "REINFORCE 的最后一个软肋是步长：一次糟糕的更新可能把策略推下悬崖（性能雪崩且不可恢复）。TRPO（2015）用 KL 散度约束每次更新幅度，换来单调改进保证，但工程上极其笨重（共轭梯度 + 线搜索）。PPO（2017）用一个裁剪目标函数逼近同样的约束，一行代码换来九成效果。下方演示两个核心机制：Clip 目标函数如何「只拦做过头的方向」，以及 GAE 如何用 λ 在偏差-方差之间连续插值。",
+      },
+      {
+        heading: "Clip 目标与 GAE 光谱",
+        body: "Tab ① 拖动 ε 滑杆、切换 A 的正负号，观察金色目标线在 r = 1±ε 处的削平与触底——min 取「更悲观一支」的结构使保护天然不对称。Tab ② 拖 λ 从 0 到 1：优势估计从单步 TD 误差逐渐累积为整条后缀序列，直观看到低方差/低偏差的权衡旋钮。",
+        demo: "ppo",
       },
     ],
   },
