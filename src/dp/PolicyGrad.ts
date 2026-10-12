@@ -74,7 +74,7 @@ export function sampleEpisodeWithPolicy(
 
 /**
  * REINFORCE：episode 结束后，沿 ∇log π(A_t|S_t) · (G_t − b) 更新 θ。
- * baseline b 为移动平均回报（不改变无偏性，降低方差）。
+ * baseline b 为折扣回报 G_0 的移动平均（与 G_t 同量纲才降方差；不改变无偏性）。
  */
 export class REINFORCE {
   policy: SoftmaxPolicy;
@@ -91,11 +91,10 @@ export class REINFORCE {
   observeEpisode(_model: GridWorldModel, traj: Trajectory, gamma: number): { gradNorm: number; steps: number } {
     const G = discountedReturns(traj, gamma);
     const T = traj.rewards.length;
-    const totalReturn = traj.rewards.reduce((x, y) => x + y, 0);
 
-    // 更新 baseline（episode 均值的增量形式）
+    // 更新 baseline（折扣回报 G_0 均值的增量形式）
     this.baselineN += 1;
-    this.baseline += (totalReturn - this.baseline) / this.baselineN;
+    this.baseline += (G[0] - this.baseline) / this.baselineN;
     const b = this.useBaseline ? this.baseline : 0;
 
     let gradNorm = 0;

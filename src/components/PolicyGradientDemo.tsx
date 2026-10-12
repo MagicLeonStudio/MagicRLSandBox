@@ -83,7 +83,7 @@ export default function PolicyGradientDemo() {
     const trajB = sampleEpisodeWithPolicy(m, rfB.policy, rngBRef.current);
     const infoB = rfB.observeEpisode(m, trajB, GAMMA);
     const trajN = sampleEpisodeWithPolicy(m, rfN.policy, rngNRef.current);
-    rfN.observeEpisode(m, trajN, GAMMA);
+    const infoN = rfN.observeEpisode(m, trajN, GAMMA);
 
     // 主角由开关选择：baseline 开 / 关 组
     const useB = useBaselineRef.current;
@@ -98,7 +98,7 @@ export default function PolicyGradientDemo() {
     const path = [...trajMain.states];
     setView(prev => {
       const ep = prev.ep + 1;
-      const history = [...prev.history, { ep, withB: infoB.steps, withoutB: trajN.states.length - 1 }];
+      const history = [...prev.history, { ep, withB: infoB.gradNorm, withoutB: infoN.gradNorm }];
       if (history.length > 400) history.shift();
       return {
         pi: rfMain.policy.greedyPolicy(m),
@@ -196,15 +196,15 @@ export default function PolicyGradientDemo() {
           </div>
 
           <div className="h-40">
-            <div className="text-xs text-muted-foreground mb-1">每条轨迹的步数（越低越好；两条曲线均为同种子独立训练）</div>
+            <div className="text-xs text-muted-foreground mb-1">每条轨迹的梯度范数 ‖∇logπ·(G−b)‖（抖动幅度即估计方差；两条曲线均为同种子独立训练）</div>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={view.history} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(139,92,246,0.15)" />
                 <XAxis dataKey="ep" stroke="#6B7280" fontSize={10} />
-                <YAxis domain={[0, 80]} stroke="#6B7280" fontSize={10} width={36} />
+                <YAxis domain={[0, "auto"]} stroke="#6B7280" fontSize={10} width={36} />
                 <Tooltip
                   contentStyle={{ backgroundColor: "#0A0A0F", border: "1px solid rgba(139,92,246,0.3)", fontSize: 12 }}
-                  formatter={(v: number, name: string) => [v, name]}
+                  formatter={(v: number, name: string) => [v.toFixed(2), name]}
                   labelFormatter={l => `episode ${l}`}
                 />
                 <Line type="monotone" dataKey="withB" name="有 baseline" stroke="#F0B822" dot={false} strokeWidth={2} isAnimationActive={false} />
