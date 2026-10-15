@@ -7,6 +7,7 @@ import MCTDDemo from "@/components/MCTDDemo";
 import CliffWalkDemo from "@/components/CliffWalkDemo";
 import PolicyGradientDemo from "@/components/PolicyGradientDemo";
 import PPODemo from "@/components/PPODemo";
+import DQNDemo from "@/components/DQNDemo";
 import ValueHeatmap from "@/components/ValueHeatmap";
 import { Button } from "@/components/ui/button";
 
@@ -57,6 +58,7 @@ export default function TutorialDetail() {
           {sec.demo === "cliff" && <CliffWalkDemo />}
           {sec.demo === "pg" && <PolicyGradientDemo />}
           {sec.demo === "ppo" && <PPODemo />}
+          {sec.demo === "dqn" && <DQNDemo />}
           {sec.demo === "mdp" && (
             <div className="flex justify-center bg-black/30 rounded-lg p-4">
               <ValueHeatmap size={5} values={ZERO25} goal={24} showValues={false} />

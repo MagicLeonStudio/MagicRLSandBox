@@ -3,7 +3,7 @@ export interface TutorialSection {
   heading: string;
   body: string;
   formula?: string;       // KaTeX 渲染
-  demo?: "dp" | "mdp" | "mctd" | "cliff" | "pg" | "ppo";    // 嵌入的交互演示组件
+  demo?: "dp" | "mdp" | "mctd" | "cliff" | "pg" | "ppo" | "dqn";    // 嵌入的交互演示组件
 }
 
 export interface Tutorial {
@@ -146,6 +146,25 @@ export const tutorials: Tutorial[] = [
         heading: "Clip 目标与 GAE 光谱",
         body: "Tab ① 拖动 ε 滑杆、切换 A 的正负号，观察金色目标线在 r = 1±ε 处的削平与触底——min 取「更悲观一支」的结构使保护天然不对称。Tab ② 拖 λ 从 0 到 1：优势估计从单步 TD 误差逐渐累积为整条后缀序列，直观看到低方差/低偏差的权衡旋钮。",
         demo: "ppo",
+      },
+    ],
+  },
+  {
+    id: "dqn",
+    no: 8,
+    title: "DQN 一夜封神：经验回放 + 目标网络的配方学",
+    subtitle: "死亡三角的现场与两个零件的救赎",
+    act: "第三幕 · 深度强化学习革命",
+    ready: false,
+    sections: [
+      {
+        heading: "Q-learning 撞墙：表格时代的终结",
+        body: "表格 Q-learning 在 Atari 像素上无能为力——状态空间 256^(160×210)。Mnih 2013 年的突破是把 Q 函数参数化为神经网络，同时引入两件稳定化工程：经验回放（打散样本相关性，数据分布回到近似 i.i.d.）与目标网络（冻结 bootstrap 目标的参照系）。下方演示在同环境、同衰减下运行三组对照：完整配方、关 replay、关 target net——拔掉任一零件，学习曲线立刻给出答案。",
+      },
+      {
+        heading: "消融实验：两个零件缺一不可",
+        body: "红色曲线（关 target net）回报崩塌且不可恢复——bootstrap 目标跟着主网络漂移，Q 值被无界放大。紫色曲线（关 replay）早期颠簸剧烈——顺序样本的相关性让更新方向互相打架。金色曲线稳步收敛。死亡三角里三根支柱缺一不可，这就是「配方学」的含义。",
+        demo: "dqn",
       },
     ],
   },
