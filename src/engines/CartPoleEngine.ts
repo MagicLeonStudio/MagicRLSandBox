@@ -24,17 +24,19 @@ export class CartPoleEngine {
   xThreshold = 2.4;
 
   state: CartPoleState;
+  private randomSource: () => number = Math.random;
 
-  constructor() {
+  constructor(randomSource?: () => number) {
+    if (randomSource) this.randomSource = randomSource;
     this.state = this.reset();
   }
 
   reset(): CartPoleState {
     this.state = {
-      cartPosition: (Math.random() - 0.5) * 0.1,
-      cartVelocity: (Math.random() - 0.5) * 0.1,
-      poleAngle: (Math.random() - 0.5) * 0.1,
-      poleVelocity: (Math.random() - 0.5) * 0.1,
+      cartPosition: (this.randomSource() - 0.5) * 0.1,
+      cartVelocity: (this.randomSource() - 0.5) * 0.1,
+      poleAngle: (this.randomSource() - 0.5) * 0.1,
+      poleVelocity: (this.randomSource() - 0.5) * 0.1,
       steps: 0,
     };
     return this.state;

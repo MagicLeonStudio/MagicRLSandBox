@@ -1,3 +1,5 @@
+import { mulberry32 } from "@/lib/rng";
+
 export class NeuralNetwork {
   weights: number[][][];
   biases: number[][];
@@ -5,8 +7,9 @@ export class NeuralNetwork {
   activations: number[][];
   zs: number[][];
 
-  constructor(layerSizes: number[]) {
+  constructor(layerSizes: number[], seed?: number) {
     this.layerSizes = layerSizes;
+    const rng = seed === undefined ? Math.random : mulberry32(seed);
     this.weights = [];
     this.biases = [];
     this.activations = [];
@@ -18,7 +21,7 @@ export class NeuralNetwork {
         const row: number[] = [];
         for (let k = 0; k < layerSizes[i - 1]; k++) {
           // He initialization for ReLU
-          row.push((Math.random() * 2 - 1) * Math.sqrt(2.0 / layerSizes[i - 1]));
+          row.push((rng() * 2 - 1) * Math.sqrt(2.0 / layerSizes[i - 1]));
         }
         w.push(row);
       }
@@ -113,12 +116,10 @@ export class NeuralNetwork {
    */
   backwardOutputGradient(outputGrad: number[], learningRate: number): number {
     const deltas: number[][] = [];
-
     // Output layer: linear activation, derivative = 1
     // delta_output = outputGrad * 1 = outputGrad
     deltas.push([...outputGrad]);
 
-    // Backpropagate through hidden layers
     for (let i = this.weights.length - 2; i >= 0; i--) {
       const delta: number[] = [];
       for (let j = 0; j < this.activations[i + 1].length; j++) {
@@ -126,7 +127,6 @@ export class NeuralNetwork {
         for (let k = 0; k < deltas[deltas.length - 1].length; k++) {
           err += deltas[deltas.length - 1][k] * this.weights[i + 1][k][j];
         }
-        // ReLU derivative
         delta.push(err * (this.zs[i][j] > 0 ? 1 : 0));
       }
       deltas.push(delta);
