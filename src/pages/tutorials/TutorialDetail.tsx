@@ -26,8 +26,10 @@ export default function TutorialDetail() {
     );
   }
 
+  const wide = t.id === "dqn";
+
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
+    <div className={`${wide ? "max-w-7xl" : "max-w-3xl"} mx-auto space-y-8`}>
       <div className="space-y-2">
         <Link to="/tutorials" className="text-sm text-muted-foreground hover:text-accent-purple inline-flex items-center gap-1">
           <ArrowLeft className="w-3.5 h-3.5" />全部教程
@@ -50,9 +52,11 @@ export default function TutorialDetail() {
 
       {t.sections.map((sec, i) => (
         <section key={i} className="space-y-3">
-          <h2 className="text-xl font-semibold border-l-2 border-accent-yellow pl-3">{sec.heading}</h2>
-          <p className="text-foreground/90 leading-relaxed text-[15px]">{sec.body}</p>
-          {sec.formula && <TeX math={sec.formula} block />}
+          <div className={wide ? "max-w-3xl" : undefined}>
+            <h2 className="text-xl font-semibold border-l-2 border-accent-yellow pl-3">{sec.heading}</h2>
+            <p className="text-foreground/90 leading-relaxed text-[15px] mt-3">{sec.body}</p>
+            {sec.formula && <TeX math={sec.formula} block />}
+          </div>
           {sec.demo === "dp" && <DPDemo />}
           {sec.demo === "mctd" && <MCTDDemo />}
           {sec.demo === "cliff" && <CliffWalkDemo />}
