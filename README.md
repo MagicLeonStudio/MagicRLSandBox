@@ -124,6 +124,7 @@ npm run build
 
 ### v1.0 — Companion to Column Articles 6–8 (in development)
 - Rebuilt the DQN demo (`/tutorials/dqn`) as a pixel-mechanism lab: real 12x12 pixel observations, a pure-TypeScript two-conv DQN, live feature maps and action Q-values, replay-buffer/batch filmstrips, fixed-probe online/target trajectories, matched-seed three-way ablation, and greedy policy evaluation
+- Added a seeded CartPole stress lab (`src/dp/CartPoleDQN.ts` + `src/components/dqn/CartPoleStressDemo.tsx`): independent greedy evaluation every 1k training steps, one-seed and three-seed modes, and clear full-vs-ablation stability curves
 - New Policy Gradient demo (`/tutorials/policy-gradient`): softmax policy + REINFORCE with optional baseline on GridWorld (`src/dp/PolicyGrad.ts`); policy-map evolution during training, baseline on/off comparison of learning curves, per-step decomposition of grad-log-prob × (G − b)
 - Version bumped ahead of release: v1.0 ships when column articles 6–8 are complete
 
