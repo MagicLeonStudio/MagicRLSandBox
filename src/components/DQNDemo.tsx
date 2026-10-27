@@ -7,6 +7,7 @@ import { Slider } from "@/components/ui/slider";
 import { PixelDQN, PixelGridEnv } from "@/dp/PixelDQN";
 import type { PixelExperience } from "@/dp/PixelDQN";
 import TeX from "@/components/TeX";
+import CartPoleStressDemo from "@/components/dqn/CartPoleStressDemo";
 import { PixelFrame, FeatureGrid, DenseBars, QValueBars, Metric, ACTION_ARROWS } from "@/components/dqn/DQNVisuals";
 
 const GOLD = "#FFD21F";
@@ -144,6 +145,7 @@ export default function DQNDemo() {
   const [stepsPerTick, setStepsPerTick] = useState(4);
   const [, setFrame] = useState(0);
   const [evalState, setEvalState] = useState<EvalState | null>(null);
+  const [resultTab, setResultTab] = useState<"cartpole" | "pixel">("cartpole");
   const runtimesRef = useRef<Record<GroupKey, Runtime> | null>(null);
   if (!runtimesRef.current) runtimesRef.current = createRuntimes("fixed");
   const runtimes = runtimesRef.current;
@@ -532,7 +534,26 @@ export default function DQNDemo() {
           </Panel>
         </div>
 
-        <Panel index="04" title="结果区：三组消融的训练回报" subtitle="MA20 · 同初始权重 · 同随机种子 · 机制先于曲线" accent={group.color}>
+        <Panel index="04" title="结果区：回报曲线与 CartPole 压力测试" subtitle="训练回报与独立贪心评估分开" accent={group.color}>
+          <div className="mb-4 flex rounded-lg border border-[#2A2445] p-1 text-[11px]">
+            {(["cartpole", "pixel"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setResultTab(tab)}
+                className="flex-1 rounded-md px-3 py-2"
+                style={{
+                  backgroundColor: resultTab === tab ? "#1C1832" : "transparent",
+                  color: resultTab === tab ? GOLD : "#A79FC7",
+                }}
+              >
+                {tab === "cartpole" ? "CartPole 稳定性压力测试" : "GridWorld 三组回报"}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: resultTab === "cartpole" ? "block" : "none" }}>
+            <CartPoleStressDemo />
+          </div>
+          <div style={{ display: resultTab === "pixel" ? "block" : "none" }}>
           <div className="h-56 rounded-lg bg-[#07060E] p-3">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={history} margin={{ top: 6, right: 12, bottom: 0, left: 0 }}>
@@ -557,6 +578,7 @@ export default function DQNDemo() {
             <p>
               这是计算量友好的小型视觉任务，三组都可能最终学会，不把单次发散当作必然结论。重点对照：batch 的时间相关性、目标参照的漂移，以及学习过程是否稳定。
             </p>
+          </div>
           </div>
         </Panel>
       </div>
