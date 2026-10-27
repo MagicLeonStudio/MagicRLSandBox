@@ -11,7 +11,7 @@ Column article 08. The end of the tabular era (Atari pixels, 256^(160x210)); DQN
 1. End of the tabular era: the wall for pixel-level state spaces; TD-Gammon's echo.
 2. The recipe: replay (correlation breaking) + target net (frozen reference); DQN loss; callout mapping the three pillars to the Deadly Triad; perception-side intuition (streaming vs batch replay).
 3. One-night fame and the variant wave: Nature 2015; Double DQN (max overestimation fix), Dueling, PER, Rainbow; DQN as a pluggable base.
-4. Sandbox hands-on: DQNDemo pixel-mechanism lab — real CNN activations, replay buffer and batch filmstrips, fixed-probe online/target trajectories, plus a three-way ablation (full / no-replay / no-target-net) with matched initialization and greedy evaluation.
+4. Sandbox hands-on: DQNDemo pixel-mechanism lab — real CNN activations, replay buffer and batch filmstrips, fixed-probe online/target trajectories, plus a three-way ablation (full / no-replay / no-target-net) with matched initialization and greedy evaluation. A separate seeded CartPole stress lab measures independent greedy balance steps every 1k training steps and exposes a clear full-vs-ablation stability gap.
 
 ## Key formulas
 
@@ -32,4 +32,4 @@ Double DQN: $r + \gamma\, Q_{\theta^-}(s', \arg\max_{a'} Q_{\theta}(s', a'))$.
 
 ## Companion demo
 
-- Tutorial page: `/tutorials/dqn` in MagicRLSandBox (v1.0) — pixel Mini GridWorld with a pure-TypeScript two-conv DQN; live CNN feature maps and action Q-values; replay-buffer and sampled-batch visualization; fixed-probe target-network step plot; three-way ablation and greedy policy evaluation.
+- Tutorial page: `/tutorials/dqn` in MagicRLSandBox (v1.0) — pixel Mini GridWorld with a pure-TypeScript two-conv DQN; live CNN feature maps and action Q-values; replay-buffer and sampled-batch visualization; fixed-probe target-network step plot; three-way ablation and greedy policy evaluation. A separate seeded CartPole stress lab plots independent greedy balance steps every 1k steps, with one-seed and three-seed modes.
