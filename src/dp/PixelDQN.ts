@@ -37,14 +37,19 @@ export interface PixelDQNParams {
   batchSize?: number;
   bufferSize?: number;
   targetUpdate?: number;
+  epsilonStart?: number;
+  epsilonMin?: number;
+  epsilonDecay?: number;
 }
 
-const GRID = 6;
-const CELL = 2;
+const GRID = 12;
+const CELL = 1;
 const IMAGE = GRID * CELL;
 const CHANNELS = 3;
-const MAX_STEPS = 48;
-const WALLS = new Set<number>();
+const MAX_STEPS = 96;
+const ACTIONS: Array<[number, number, number]> = [
+  [0, -1, 0], [1, 1, 0], [2, 0, -1], [3, 0, 1],
+];
 
 function hash01(n: number): number {
   let x = n | 0;
@@ -61,7 +66,18 @@ export class PixelGridEnv {
   episode = 0;
   private rng: () => number;
   shaping = 0.16;
+  textureLevel = 1;
   layout: "fixed" | "randomStart" | "randomBoth" = "fixed";
+  walls = new Set<number>();
+  goalPool: number[] = [];
+  goalScenarios: number[] = [];
+  wallScenarios: number[][] = [];
+  wallCount = 0;
+  regimeEvery = 0;
+  regime = 0;
+  maxSteps = MAX_STEPS;
+  startCell = 0;
+  goalCell = GRID * GRID - 1;
 
   constructor(seed = 1) {
     this.rng = mulberry32(seed);
@@ -71,33 +87,89 @@ export class PixelGridEnv {
   reset(): Float32Array {
     this.episode++;
     this.steps = 0;
+    if (this.layout === "fixed" && this.wallScenarios.length === 0 && this.goalScenarios.length === 0 && this.wallCount === 0) {
+      this.walls.clear();
+      this.pos = this.startCell;
+      this.goal = this.goalCell;
+      return this.obs();
+    }
+
+    if ((this.wallScenarios.length > 0 || this.goalScenarios.length > 0) && (this.regime === 0 || (this.regimeEvery > 0 && (this.episode - 1) % this.regimeEvery === 0))) {
+      if (this.wallScenarios.length > 0) this.walls = new Set(this.wallScenarios[this.regime % this.wallScenarios.length]);
+      if (this.goalScenarios.length > 0) this.goalCell = this.goalScenarios[this.regime % this.goalScenarios.length];
+      this.regime++;
+    } else if (this.wallCount > 0 && (this.regime === 0 || (this.regimeEvery > 0 && (this.episode - 1) % this.regimeEvery === 0))) {
+      this.generateWalls();
+      this.regime++;
+    }
     const free: number[] = [];
-    for (let i = 0; i < GRID * GRID; i++) if (!WALLS.has(i)) free.push(i);
+    for (let i = 0; i < GRID * GRID; i++) if (!this.walls.has(i)) free.push(i);
+    if (this.layout === "fixed") {
+      this.pos = this.startCell;
+      this.goal = this.goalCell;
+      return this.obs();
+    }
+    const pool = this.goalPool.filter((cell) => !this.walls.has(cell));
+    const chooseGoal = () => {
+      if (pool.length > 0) return pool[Math.floor(this.rng() * pool.length)];
+      return this.layout === "randomStart" ? GRID * GRID - 1 : free[Math.floor(this.rng() * free.length)];
+    };
     const distance = () => {
       const pr = Math.floor(this.pos / GRID), pc = this.pos % GRID;
       const gr = Math.floor(this.goal / GRID), gc = this.goal % GRID;
       return Math.abs(pr - gr) + Math.abs(pc - gc);
     };
-    if (this.layout === "fixed") {
-      this.pos = 0;
-      this.goal = 35;
-    } else {
-      this.goal = this.layout === "randomStart" ? 35 : free[Math.floor(this.rng() * free.length)];
+    this.goal = chooseGoal();
+    this.pos = free[Math.floor(this.rng() * free.length)];
+    let guard = 0;
+    while ((this.goal === this.pos || distance() < 3 || !this.isSolvable()) && guard++ < 100) {
       this.pos = free[Math.floor(this.rng() * free.length)];
-      let guard = 0;
-      while ((this.goal === this.pos || distance() < 3) && guard++ < 100) {
-        this.pos = free[Math.floor(this.rng() * free.length)];
-        if (this.layout === "randomBoth") this.goal = free[Math.floor(this.rng() * free.length)];
-      }
+      this.goal = chooseGoal();
+    }
+    if (!this.isSolvable()) {
+      this.walls.clear();
+      this.pos = 0;
+      this.goal = this.goalCell;
     }
     return this.obs();
+  }
+
+  private generateWalls() {
+    this.walls.clear();
+    let guard = 0;
+    while (this.walls.size < this.wallCount && guard++ < 200) {
+      const cell = Math.floor(this.rng() * GRID * GRID);
+      if (cell !== 0 && cell !== GRID * GRID - 1) this.walls.add(cell);
+    }
+  }
+
+  private isSolvable(): boolean {
+    if (this.pos === this.goal) return true;
+    const queue = [this.pos];
+    const seen = new Set<number>(queue);
+    while (queue.length) {
+      const current = queue.shift()!;
+      const row = Math.floor(current / GRID), col = current % GRID;
+      for (const [action, dr, dc] of ACTIONS) {
+        void action;
+        const nr = row + dr, nc = col + dc;
+        if (nr < 0 || nr >= GRID || nc < 0 || nc >= GRID) continue;
+        const next = nr * GRID + nc;
+        if (next === this.goal) return true;
+        if (!seen.has(next) && !this.walls.has(next)) {
+          seen.add(next);
+          queue.push(next);
+        }
+      }
+    }
+    return false;
   }
 
   obs(): Float32Array {
     const out = new Float32Array(IMAGE * IMAGE * CHANNELS);
     const textureSeed = this.episode * 7919 + 17;
     for (let i = 0; i < IMAGE * IMAGE; i++) {
-      const n = hash01(textureSeed + i * 13);
+      const n = hash01(textureSeed + i * 13) * this.textureLevel;
       out[i * 3] = 0.012 + n * 0.025;
       out[i * 3 + 1] = 0.009 + n * 0.014;
       out[i * 3 + 2] = 0.028 + n * 0.045;
@@ -111,7 +183,7 @@ export class PixelGridEnv {
         }
       }
     };
-    for (const wall of WALLS) paint(wall, [0.17, 0.14, 0.28]);
+    for (const wall of this.walls) paint(wall, [0.17, 0.14, 0.28]);
     paint(this.goal, [0.55, 0.36, 0.96]);
     paint(this.pos, [1.0, 0.72, 0.04]);
     return out;
@@ -125,7 +197,7 @@ export class PixelGridEnv {
     ];
     for (const [action, nr, nc] of candidates) {
       if (nr < 0 || nr >= GRID || nc < 0 || nc >= GRID) continue;
-      if (!WALLS.has(nr * GRID + nc)) valid.push(action);
+      if (!this.walls.has(nr * GRID + nc)) valid.push(action);
     }
     return valid;
   }
@@ -141,14 +213,14 @@ export class PixelGridEnv {
     else nc = Math.min(GRID - 1, col + 1);
     const next = nr * GRID + nc;
     this.steps++;
-    if (WALLS.has(next) || next === this.pos) {
-      return { s2: this.obs(), r: -0.02, done: this.steps >= MAX_STEPS };
+    if (this.walls.has(next) || next === this.pos) {
+      return { s2: this.obs(), r: -0.02, done: this.steps >= this.maxSteps };
     }
     this.pos = next;
     const newDistance = Math.abs(nr - goalRow) + Math.abs(nc - goalCol);
     const shaping = this.shaping * (oldDistance - newDistance);
     if (next === this.goal) return { s2: this.obs(), r: 1 + shaping, done: true };
-    return { s2: this.obs(), r: -0.02 + shaping, done: this.steps >= MAX_STEPS };
+    return { s2: this.obs(), r: -0.02 + shaping, done: this.steps >= this.maxSteps };
   }
 }
 
@@ -178,11 +250,15 @@ export class PixelDQN {
       batchSize: params.batchSize ?? 16,
       bufferSize: params.bufferSize ?? 3000,
       targetUpdate: params.targetUpdate ?? 100,
+      epsilonStart: params.epsilonStart ?? 1,
+      epsilonMin: params.epsilonMin ?? 0.05,
+      epsilonDecay: params.epsilonDecay ?? 0.99,
     };
     this.online = new TinyCNN(params.seed);
     this.target = new TinyCNN(params.seed);
     this.target.setWeights(this.online.getWeights());
     this.rng = mulberry32(params.seed + 100003);
+    this.epsilon = this.params.epsilonStart;
   }
 
   selectAction(s: Float32Array, epsilon: number, valid = [0, 1, 2, 3]): number {
@@ -194,7 +270,7 @@ export class PixelDQN {
   }
 
   finishEpisode() {
-    this.epsilon = Math.max(0.05, this.epsilon * 0.99);
+    this.epsilon = Math.max(this.params.epsilonMin, this.epsilon * this.params.epsilonDecay);
   }
 
   setProbe(s: Float32Array) {
