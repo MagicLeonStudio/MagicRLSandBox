@@ -4,7 +4,7 @@ import { Play, Pause, StepForward, RotateCcw, Search, BrainCircuit, Trophy } fro
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import TeX from "@/components/TeX";
-import { PolicyValueNet, MiniMaxSolver, runMCTS, selfPlayIteration, evaluateAgainstSolver, winner } from "@/dp/TinyAlphaZero";
+import { PolicyValueNet, MiniMaxSolver, runMCTS, selfPlayIteration, evaluateAgainstSolver, winner, CELL_COUNT } from "@/dp/TinyAlphaZero";
 import type { MCTSActionStat, PVOutput, Player, Board } from "@/dp/TinyAlphaZero";
 
 const GOLD = "#FFD21F";
@@ -16,14 +16,14 @@ interface EvalHistory {
   iteration: number;
   samples: number;
   loss: number;
-  policyDraw: number;
+  policyWin: number;
   policyLoss: number;
-  mctsDraw: number;
+  mctsWin: number;
   mctsLoss: number;
 }
 
 function cellName(index: number): string {
-  return `${String.fromCharCode(65 + (index % 3))}${Math.floor(index / 3) + 1}`;
+  return `${String.fromCharCode(65 + (index % 4))}${Math.floor(index / 4) + 1}`;
 }
 
 function BoardGrid({
@@ -38,8 +38,8 @@ function BoardGrid({
   visits?: number[];
 }) {
   return (
-    <div className="grid w-fit grid-cols-3 gap-1.5 rounded-lg border border-[#2A2445] bg-[#07060E] p-2">
-      {Array.from({ length: 9 }, (_, index) => {
+    <div className="grid w-fit grid-cols-4 gap-1.5 rounded-lg border border-[#2A2445] bg-[#07060E] p-2">
+      {Array.from({ length: CELL_COUNT }, (_, index) => {
         const stone = board[index];
         const value = values?.[index];
         const visit = visits?.[index];
@@ -48,7 +48,7 @@ function BoardGrid({
             key={index}
             disabled={stone !== 0 || !onCellClick}
             onClick={() => onCellClick?.(index)}
-            className="relative flex h-16 w-16 items-center justify-center rounded-md border text-lg font-bold transition-colors disabled:cursor-default"
+            className="relative flex h-14 w-14 items-center justify-center rounded-md border text-base font-bold transition-colors disabled:cursor-default md:h-16 md:w-16"
             style={{
               borderColor: stone === 1 ? GOLD : stone === -1 ? PURPLE : "#2A2445",
               backgroundColor: value !== undefined ? `rgba(255,210,31,${Math.min(0.55, value * 0.55)})` : stone === 0 ? "#0D0B18" : "#141126",
@@ -84,19 +84,20 @@ export default function AlphaZeroDemo() {
   const net = netRef.current;
   const solver = solverRef.current;
 
-  const [board, setBoard] = useState<Board>(new Int8Array(9));
+  const [board, setBoard] = useState<Board>(new Int8Array(CELL_COUNT));
   const [player, setPlayer] = useState<Player>(1);
   const [stats, setStats] = useState<MCTSActionStat[]>([]);
-  const [pv, setPv] = useState<PVOutput>(() => net.forward(new Int8Array(9), 1));
+  const [pv, setPv] = useState<PVOutput>(() => net.forward(new Int8Array(CELL_COUNT), 1));
   const [simulations, setSimulations] = useState(100);
   const [cPuct, setCPuct] = useState(1.5);
 
   const runSearch = useCallback(() => {
-    if (winner(board) !== null) {
+    if (outcome) {
       setStats([]);
       return;
     }
-    setStats(runMCTS(board, player, net, simulations, cPuct));
+    const nextStats = runMCTS(board, player, net, simulations, cPuct);
+    setStats(nextStats);
     setPv(net.forward(board, player));
   }, [board, player, net, simulations, cPuct]);
 
@@ -113,9 +114,9 @@ export default function AlphaZeroDemo() {
   };
 
   const resetBoard = () => {
-    setBoard(new Int8Array(9));
+    setBoard(new Int8Array(CELL_COUNT));
     setPlayer(1);
-    setPv(net.forward(new Int8Array(9), 1));
+    setPv(net.forward(new Int8Array(CELL_COUNT), 1));
     setStats([]);
   };
 
@@ -124,13 +125,13 @@ export default function AlphaZeroDemo() {
   const [loss, setLoss] = useState(0);
   const [history, setHistory] = useState<EvalHistory[]>([]);
   const [playing, setPlaying] = useState(false);
-  const [latestEval, setLatestEval] = useState<{ policyDraw: number; policyLoss: number; mctsDraw: number; mctsLoss: number }>({ policyDraw: 0, policyLoss: 0, mctsDraw: 0, mctsLoss: 0 });
+  const [latestEval, setLatestEval] = useState<{ policyWin: number; policyLoss: number; mctsWin: number; mctsLoss: number }>({ policyWin: 0, policyLoss: 0, mctsWin: 0, mctsLoss: 0 });
   const iterationRef = useRef(0);
 
   const runEvaluation = useCallback(() => {
     const policy = evaluateAgainstSolver(net, solver, 12, 0, 42);
     const mcts = evaluateAgainstSolver(net, solver, 6, 100, 42);
-    const point = { policyDraw: policy.draw, policyLoss: policy.loss, mctsDraw: mcts.draw, mctsLoss: mcts.loss };
+    const point = { policyWin: policy.win, policyLoss: policy.loss, mctsWin: mcts.win, mctsLoss: mcts.loss };
     setLatestEval(point);
     return point;
   }, [net, solver]);
@@ -151,9 +152,9 @@ export default function AlphaZeroDemo() {
       iteration: next,
       samples: info.samples,
       loss: info.loss,
-      policyDraw: evaluation.policyDraw,
+      policyWin: evaluation.policyWin,
       policyLoss: evaluation.policyLoss,
-      mctsDraw: evaluation.mctsDraw,
+      mctsWin: evaluation.mctsWin,
       mctsLoss: evaluation.mctsLoss,
     };
     setHistory((prev) => [...prev, point]);
@@ -178,7 +179,7 @@ export default function AlphaZeroDemo() {
   };
 
   const totalVisits = stats.reduce((sum, stat) => sum + stat.visits, 0);
-  const visitDist = Array.from({ length: 9 }, (_, action) => {
+  const visitDist = Array.from({ length: CELL_COUNT }, (_, action) => {
     const stat = stats.find((item) => item.action === action);
     return totalVisits > 0 && stat ? stat.visits / totalVisits : 0;
   });
@@ -189,7 +190,7 @@ export default function AlphaZeroDemo() {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2A2445] bg-[#0D0B18] px-4 py-3">
         <div>
           <div className="font-mono text-[10px] tracking-[0.18em] text-[#8B5CF6]">TINY ALPHAZERO · SEARCH AS POLICY IMPROVEMENT</div>
-          <div className="mt-1 text-sm font-semibold">井字棋上的自我对弈与策略蒸馏</div>
+          <div className="mt-1 text-sm font-semibold">4×4 三子连线上的自我对弈与策略蒸馏</div>
         </div>
         <div className="hidden md:block text-xs text-[#A79FC7]">
           <TeX math="a^*=\arg\max_a\left[Q(s,a)+cP(s,a)\frac{\sqrt{N(s)}}{1+N(s,a)}\right]" />
@@ -217,14 +218,15 @@ export default function AlphaZeroDemo() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <BoardGrid board={board} onCellClick={makeMove} />
-                <div className="space-y-2 text-[11px] text-[#A79FC7]">
-                  <div>当前：<b style={{ color: player === 1 ? GOLD : PURPLE }}>{player === 1 ? "× 先手" : "○ 后手"}</b></div>
-                  <div>点空格落子，随后点“运行 MCTS”。</div>
-                  <div>完美 solver 仅用于评估，训练不使用。</div>
+                <div className="max-w-[250px] rounded-lg border border-[#2A2445] bg-[#0D0B18] p-3 text-[11px] leading-relaxed text-[#A79FC7]">
+                  <div className="mb-2 text-xs font-semibold text-[#F1EEFB]">规则与评估</div>
+                  <div>双方轮流落子，横、竖、斜任意一条连续三子连线即胜。</div>
+                  <div>棋盘满仍未分胜负为平局。</div>
+                  <div className="pt-1 text-[#6B6390]">完美 minimax 只用于赛后评估，训练只使用自我对弈。当前：<b style={{ color: player === 1 ? GOLD : PURPLE }}>{player === 1 ? "× 先手" : "○ 后手"}</b></div>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <Button size="sm" className="bg-[#FFD21F] text-black hover:bg-[#FFE873]" onClick={runSearch} disabled={outcome !== null}>
+                <Button size="sm" className="bg-[#FFD21F] text-black hover:bg-[#FFE873]" onClick={runSearch}>
                   <Search className="mr-1 h-4 w-4" />运行 MCTS
                 </Button>
                 <Button size="sm" variant="outline" onClick={resetBoard}><RotateCcw className="mr-1 h-4 w-4" />重置棋局</Button>
@@ -277,7 +279,7 @@ export default function AlphaZeroDemo() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 border-t border-[#2A2445] pt-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 items-start gap-4 border-t border-[#2A2445] pt-4 md:grid-cols-2">
             <div>
               <div className="mb-2 flex items-center gap-2 text-xs text-[#A79FC7]"><BrainCircuit className="h-4 w-4 text-[#8B5CF6]" />网络先验 p(s,a)</div>
               <BoardGrid board={board} values={pv.probs} />
@@ -308,9 +310,9 @@ export default function AlphaZeroDemo() {
             <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-5">
               <Metric label="样本" value={String(samples)} accent={BLUE} />
               <Metric label="损失" value={loss.toFixed(3)} accent={PURPLE} />
-              <Metric label="策略平局" value={`${latestEval.policyDraw} / 12`} accent={GOLD} />
+              <Metric label="策略胜局" value={`${latestEval.policyWin} / 12`} accent={GOLD} />
               <Metric label="策略负局" value={`${latestEval.policyLoss} / 12`} accent={MELON} />
-              <Metric label="MCTS 平局" value={`${latestEval.mctsDraw} / 6`} accent={BLUE} />
+              <Metric label="MCTS 胜局" value={`${latestEval.mctsWin} / 6`} accent={BLUE} />
             </div>
           </div>
 
@@ -330,7 +332,7 @@ export default function AlphaZeroDemo() {
               </div>
             </div>
             <div>
-              <div className="mb-2 text-xs text-[#A79FC7]">对完美 solver 的平局数：原始策略 vs MCTS</div>
+              <div className="mb-2 text-xs text-[#A79FC7]">对完美 solver 的胜局数：原始策略 vs MCTS</div>
               <div className="h-44 rounded-lg bg-[#0D0B18] p-2">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={history} margin={{ top: 6, right: 8, bottom: 0, left: 0 }}>
@@ -338,8 +340,8 @@ export default function AlphaZeroDemo() {
                     <XAxis dataKey="iteration" stroke="#6B6390" fontSize={10} />
                     <YAxis stroke="#6B6390" fontSize={10} width={42} domain={[0, 12]} />
                     <Tooltip contentStyle={{ backgroundColor: "#0D0B18", border: "1px solid #2A2445", fontSize: 11 }} />
-                    <Line type="monotone" dataKey="policyDraw" name="原始策略平局" stroke={GOLD} dot={false} strokeWidth={2.4} isAnimationActive={false} />
-                    <Line type="monotone" dataKey="mctsDraw" name="MCTS 平局" stroke={BLUE} dot={false} strokeWidth={1.8} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="policyWin" name="原始策略胜局" stroke={GOLD} dot={false} strokeWidth={2.4} isAnimationActive={false} />
+                    <Line type="monotone" dataKey="mctsWin" name="MCTS 胜局" stroke={BLUE} dot={false} strokeWidth={1.8} isAnimationActive={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
