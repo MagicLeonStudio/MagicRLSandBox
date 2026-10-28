@@ -3,7 +3,7 @@ export interface TutorialSection {
   heading: string;
   body: string;
   formula?: string;       // KaTeX 渲染
-  demo?: "dp" | "mdp" | "mctd" | "cliff" | "pg" | "ppo" | "dqn";    // 嵌入的交互演示组件
+  demo?: "dp" | "mdp" | "mctd" | "cliff" | "pg" | "ppo" | "dqn" | "alphazero";    // 嵌入的交互演示组件
 }
 
 export interface Tutorial {
@@ -165,6 +165,25 @@ export const tutorials: Tutorial[] = [
         heading: "机制透视与消融：两个零件如何工作",
         body: "视窗 ② 把回放池和每批样本画成经验胶片，直接比较随机 batch 与在线顺序样本；视窗 ③ 用固定探针对比在线网络与目标网络，看到目标参数的阶梯式同步。三组对照共享初始权重和随机种子；在这个小型视觉任务上，三组都可能最终学会，重点不是等待一条必然崩塌的曲线，而是观察样本相关性与目标漂移。点击“评估策略”可暂停训练，以 ε=0 查看当前策略的实际导航。结果区另有 CartPole 压力测试：每 1000 步独立进行 10 局贪心评估，完整配方与两路消融的平衡步数显著分离，可切换三种子复核随机性。",
         demo: "dqn",
+      },
+    ],
+  },
+  {
+    id: "alphago",
+    no: 9,
+    title: "AlphaGo 三部曲：从围棋到 AlphaZero 的通用棋类之神",
+    subtitle: "MCTS、策略价值网络与自我对弈蒸馏",
+    act: "第三幕 · 深度强化学习革命",
+    ready: false,
+    sections: [
+      {
+        heading: "从价值估计到搜索：AlphaGo 的三次减法",
+        body: "AlphaGo（2016）用人类棋谱训练策略网络、用自我对弈训练价值网络，再由 MCTS 完成 lookahead；AlphaGo Zero（2017）删除人类数据与随机 rollout，只保留一个策略价值网络；AlphaZero（2017/2018）进一步删除游戏特定工程，让同一套自我对弈算法横跨 chess、shogi 与 Go。核心不是网络更大，而是 MCTS 被放进了训练闭环：搜索先改进当前策略，再把改进后的访问分布蒸馏回网络。",
+      },
+      {
+        heading: "Tiny AlphaZero：把闭环跑给你看",
+        body: "下方演示在井字棋上完整执行 PUCT 搜索、自我对弈与策略价值训练。搜索页可以逐点查看每个动作的访问次数、均值 Q、先验 P 与 PUCT 分数，并比较网络先验 p 与 MCTS 访问分布 π；训练页每轮进行 24 局自我对弈，每步 300 次模拟，并定期用完美 minimax 做独立评估。求解器只用于评估，绝不出现在训练数据里。",
+        demo: "alphazero",
       },
     ],
   },
