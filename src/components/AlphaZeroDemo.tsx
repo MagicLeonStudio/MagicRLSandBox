@@ -23,7 +23,7 @@ interface EvalHistory {
 }
 
 function cellName(index: number): string {
-  return `${String.fromCharCode(65 + (index % 4))}${Math.floor(index / 4) + 1}`;
+  return `${String.fromCharCode(65 + (index % 5))}${Math.floor(index / 5) + 1}`;
 }
 
 function BoardGrid({
@@ -38,7 +38,7 @@ function BoardGrid({
   visits?: number[];
 }) {
   return (
-    <div className="grid w-fit grid-cols-4 gap-1.5 rounded-lg border border-[#2A2445] bg-[#07060E] p-2">
+    <div className="grid w-fit grid-cols-5 gap-1.5 rounded-lg border border-[#2A2445] bg-[#07060E] p-2">
       {Array.from({ length: CELL_COUNT }, (_, index) => {
         const stone = board[index];
         const value = values?.[index];
@@ -48,7 +48,7 @@ function BoardGrid({
             key={index}
             disabled={stone !== 0 || !onCellClick}
             onClick={() => onCellClick?.(index)}
-            className="relative flex h-14 w-14 items-center justify-center rounded-md border text-base font-bold transition-colors disabled:cursor-default md:h-16 md:w-16"
+            className="relative flex h-11 w-11 items-center justify-center rounded-md border text-sm font-bold transition-colors disabled:cursor-default md:h-14 md:w-14 md:text-base"
             style={{
               borderColor: stone === 1 ? GOLD : stone === -1 ? PURPLE : "#2A2445",
               backgroundColor: value !== undefined ? `rgba(255,210,31,${Math.min(0.55, value * 0.55)})` : stone === 0 ? "#0D0B18" : "#141126",
@@ -92,7 +92,7 @@ export default function AlphaZeroDemo() {
   const [cPuct, setCPuct] = useState(1.5);
 
   const runSearch = useCallback(() => {
-    if (outcome) {
+    if (outcome !== null) {
       setStats([]);
       return;
     }
@@ -104,7 +104,7 @@ export default function AlphaZeroDemo() {
   useEffect(() => { runSearch(); }, []);
 
   const makeMove = (index: number) => {
-    if (board[index] !== 0) return;
+    if (board[index] !== 0 || outcome !== null) return;
     const next = new Int8Array(board);
     next[index] = player;
     setBoard(next);
@@ -129,6 +129,7 @@ export default function AlphaZeroDemo() {
   const iterationRef = useRef(0);
 
   const runEvaluation = useCallback(() => {
+    solver.maxDepth = 6;
     const policy = evaluateAgainstSolver(net, solver, 12, 0, 42);
     const mcts = evaluateAgainstSolver(net, solver, 6, 100, 42);
     const point = { policyWin: policy.win, policyLoss: policy.loss, mctsWin: mcts.win, mctsLoss: mcts.loss };
@@ -190,7 +191,7 @@ export default function AlphaZeroDemo() {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#2A2445] bg-[#0D0B18] px-4 py-3">
         <div>
           <div className="font-mono text-[10px] tracking-[0.18em] text-[#8B5CF6]">TINY ALPHAZERO · SEARCH AS POLICY IMPROVEMENT</div>
-          <div className="mt-1 text-sm font-semibold">4×4 三子连线上的自我对弈与策略蒸馏</div>
+          <div className="mt-1 text-sm font-semibold">5×5 三子连线上的自我对弈与策略蒸馏</div>
         </div>
         <div className="hidden md:block text-xs text-[#A79FC7]">
           <TeX math="a^*=\arg\max_a\left[Q(s,a)+cP(s,a)\frac{\sqrt{N(s)}}{1+N(s,a)}\right]" />
@@ -222,7 +223,7 @@ export default function AlphaZeroDemo() {
                   <div className="mb-2 text-xs font-semibold text-[#F1EEFB]">规则与评估</div>
                   <div>双方轮流落子，横、竖、斜任意一条连续三子连线即胜。</div>
                   <div>棋盘满仍未分胜负为平局。</div>
-                  <div className="pt-1 text-[#6B6390]">完美 minimax 只用于赛后评估，训练只使用自我对弈。当前：<b style={{ color: player === 1 ? GOLD : PURPLE }}>{player === 1 ? "× 先手" : "○ 后手"}</b></div>
+                  <div className="pt-1 text-[#6B6390]">深度受限 minimax 只用于赛后评估，训练只使用自我对弈。当前：<b style={{ color: player === 1 ? GOLD : PURPLE }}>{player === 1 ? "× 先手" : "○ 后手"}</b></div>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -332,7 +333,7 @@ export default function AlphaZeroDemo() {
               </div>
             </div>
             <div>
-              <div className="mb-2 text-xs text-[#A79FC7]">对完美 solver 的胜局数：原始策略 vs MCTS</div>
+              <div className="mb-2 text-xs text-[#A79FC7]">对深度受限 solver 的胜局数：原始策略 vs MCTS</div>
               <div className="h-44 rounded-lg bg-[#0D0B18] p-2">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={history} margin={{ top: 6, right: 8, bottom: 0, left: 0 }}>
@@ -350,7 +351,7 @@ export default function AlphaZeroDemo() {
 
           <div className="grid grid-cols-1 gap-2 text-[10px] leading-relaxed text-[#6B6390] md:grid-cols-2">
             <p>每次迭代包含 24 局自我对弈、每步 300 次 PUCT 模拟、10 轮策略价值训练。切回搜索页，可以直接比较训练后的网络先验与 MCTS 访问分布。</p>
-            <p>评估与训练严格分离：完美 minimax 只在评估时出现。目标不是证明小网络“无敌”，而是观察它如何从随机策略逐步获得与搜索一致的决策倾向。</p>
+            <p>评估与训练严格分离：评估器为深度受限 minimax，仅在评估时使用。目标不是证明小网络“无敌”，而是观察它如何从随机策略逐步获得与搜索一致的决策倾向。</p>
           </div>
         </div>
       )}
