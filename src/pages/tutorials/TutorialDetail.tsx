@@ -8,6 +8,7 @@ import CliffWalkDemo from "@/components/CliffWalkDemo";
 import PolicyGradientDemo from "@/components/PolicyGradientDemo";
 import PPODemo from "@/components/PPODemo";
 import DQNDemo from "@/components/DQNDemo";
+import AlphaZeroDemo from "@/components/AlphaZeroDemo";
 import ValueHeatmap from "@/components/ValueHeatmap";
 import { Button } from "@/components/ui/button";
 
@@ -26,7 +27,7 @@ export default function TutorialDetail() {
     );
   }
 
-  const wide = t.id === "dqn";
+  const wide = t.id === "dqn" || t.id === "alphago";
 
   return (
     <div className={`${wide ? "max-w-7xl" : "max-w-3xl"} mx-auto space-y-8`}>
@@ -63,6 +64,7 @@ export default function TutorialDetail() {
           {sec.demo === "pg" && <PolicyGradientDemo />}
           {sec.demo === "ppo" && <PPODemo />}
           {sec.demo === "dqn" && <DQNDemo />}
+          {sec.demo === "alphazero" && <AlphaZeroDemo />}
           {sec.demo === "mdp" && (
             <div className="flex justify-center bg-black/30 rounded-lg p-4">
               <ValueHeatmap size={5} values={ZERO25} goal={24} showValues={false} />
