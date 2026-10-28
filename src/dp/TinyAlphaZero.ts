@@ -4,7 +4,7 @@ import { mulberry32 } from "@/lib/rng";
 export type Player = 1 | -1;
 export type Board = Int8Array<ArrayBuffer>;
 
-export const BOARD_SIZE = 4;
+export const BOARD_SIZE = 5;
 export const WIN_LENGTH = 3;
 export const CELL_COUNT = BOARD_SIZE * BOARD_SIZE;
 
@@ -202,19 +202,36 @@ export function mctsAction(board: Board, player: Player, net: PolicyValueNet, si
   return stats[stats.length - 1].action;
 }
 
-/** Exact minimax, used only as an external evaluator. */
+/** Minimax evaluator (optionally depth-limited with a connect-line heuristic), used only as an external evaluator. */
 export class MiniMaxSolver {
   private memo = new Map<string, { score: number; action: number }>();
+  maxDepth = Infinity;
 
   solve(board: Board, player: Player, rng?: () => number): { score: number; action: number } {
-    const result = this.search(board, player, -Infinity, Infinity);
+    const result = this.search(board, player, -Infinity, Infinity, 0);
     if (!rng) return result;
     const alternatives = this.bestActions(board, player, result.score);
     return { score: result.score, action: alternatives[Math.floor(rng() * alternatives.length)] };
   }
 
-  private search(board: Board, player: Player, alpha: number, beta: number): { score: number; action: number } {
-    const key = boardKey(board, player);
+  private heuristic(board: Board, player: Player): number {
+    let score = 0;
+    for (const line of LINES) {
+      let mine = 0;
+      let theirs = 0;
+      for (const idx of line) {
+        if (board[idx] === player) mine++;
+        else if (board[idx] === -player) theirs++;
+      }
+      if (mine > 0 && theirs > 0) continue;
+      if (mine > 0) score += mine * mine;
+      if (theirs > 0) score -= theirs * theirs;
+    }
+    return Math.tanh(score / 12);
+  }
+
+  private search(board: Board, player: Player, alpha: number, beta: number, depth: number): { score: number; action: number } {
+    const key = `${boardKey(board, player)}:${depth}`;
     const cached = this.memo.get(key);
     if (cached) return cached;
     const terminal = winner(board);
@@ -223,10 +240,13 @@ export class MiniMaxSolver {
       this.memo.set(key, result);
       return result;
     }
+    if (depth >= this.maxDepth) {
+      return { score: this.heuristic(board, player), action: -1 };
+    }
     let bestScore = -Infinity;
     let bestAction = -1;
     for (const action of this.orderedActions(board)) {
-      const child = this.search(applyAction(board, action, player), -player as Player, -beta, -alpha);
+      const child = this.search(applyAction(board, action, player), -player as Player, -beta, -alpha, depth + 1);
       const score = -child.score;
       if (score > bestScore) {
         bestScore = score;
@@ -242,7 +262,7 @@ export class MiniMaxSolver {
 
   private orderedActions(board: Board): number[] {
     const legal = legalActions(board);
-    const center = [5, 6, 9, 10];
+    const center = BOARD_SIZE === 5 ? [12, 7, 11, 13, 17, 6, 8, 16, 18] : [5, 6, 9, 10];
     return [
       ...center.filter((action) => legal.includes(action)),
       ...legal.filter((action) => !center.includes(action)),
@@ -251,7 +271,7 @@ export class MiniMaxSolver {
   private bestActions(board: Board, player: Player, bestScore: number): number[] {
     const actions: number[] = [];
     for (const action of legalActions(board)) {
-      const score = -this.solve(applyAction(board, action, player), -player as Player).score;
+      const score = -this.search(applyAction(board, action, player), -player as Player, -Infinity, Infinity, 0).score;
       if (score === bestScore) actions.push(action);
     }
     return actions;
