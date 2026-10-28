@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/Tailwind-3.4-06B6D4?logo=tailwindcss" alt="Tailwind CSS">
   <img src="https://img.shields.io/badge/Vite-7.2-646CFF?logo=vite" alt="Vite">
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
-  <img src="https://img.shields.io/badge/version-v1.0-purple" alt="Version">
+  <img src="https://img.shields.io/badge/version-v1.1-purple" alt="Version">
 </p>
 
 An interactive, browser-based reinforcement learning (RL) demonstration platform. From classic Q-Learning (1989) to modern PPO (2017) — watch AI agents learn in real-time through three sandbox games.
@@ -121,6 +121,9 @@ npm run build
 | PPO | 2017 | Policy Gradient | Cart Pole, Snake | Clipped surrogate objective |
 
 ## Changelog
+
+### v1.1 — Companion to Column Articles 9–11 (in development)
+- New Tiny AlphaZero demo (`/tutorials/alphago`): PUCT action statistics, network-prior vs MCTS-visit heatmaps, self-play training loss, and independent solver evaluation. Solver is evaluation-only and never supplies training data
 
 ### v1.0 — Companion to Column Articles 6–8 (in development)
 - Rebuilt the DQN demo (`/tutorials/dqn`) as a pixel-mechanism lab: real 12x12 pixel observations, a pure-TypeScript two-conv DQN, live feature maps and action Q-values, replay-buffer/batch filmstrips, fixed-probe online/target trajectories, matched-seed three-way ablation, and greedy policy evaluation
