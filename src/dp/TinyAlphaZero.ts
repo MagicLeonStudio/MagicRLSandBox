@@ -4,6 +4,24 @@ import { mulberry32 } from "@/lib/rng";
 export type Player = 1 | -1;
 export type Board = Int8Array<ArrayBuffer>;
 
+export const BOARD_SIZE = 4;
+export const WIN_LENGTH = 3;
+export const CELL_COUNT = BOARD_SIZE * BOARD_SIZE;
+
+const LINES: number[][] = (() => {
+  const lines: number[][] = [];
+  for (let row = 0; row < BOARD_SIZE; row++) {
+    for (let col = 0; col < BOARD_SIZE; col++) {
+      const start = row * BOARD_SIZE + col;
+      if (col <= BOARD_SIZE - WIN_LENGTH) lines.push(Array.from({ length: WIN_LENGTH }, (_, k) => start + k));
+      if (row <= BOARD_SIZE - WIN_LENGTH) lines.push(Array.from({ length: WIN_LENGTH }, (_, k) => start + k * BOARD_SIZE));
+      if (row <= BOARD_SIZE - WIN_LENGTH && col <= BOARD_SIZE - WIN_LENGTH) lines.push(Array.from({ length: WIN_LENGTH }, (_, k) => start + k * (BOARD_SIZE + 1)));
+      if (row <= BOARD_SIZE - WIN_LENGTH && col >= WIN_LENGTH - 1) lines.push(Array.from({ length: WIN_LENGTH }, (_, k) => start + k * (BOARD_SIZE - 1)));
+    }
+  }
+  return lines;
+})();
+
 export interface PVOutput {
   probs: number[];
   value: number;
@@ -30,23 +48,19 @@ export interface EvalResult {
   loss: number;
 }
 
-const LINES: number[][] = [
-  [0, 1, 2], [3, 4, 5], [6, 7, 8],
-  [0, 3, 6], [1, 4, 7], [2, 5, 8],
-  [0, 4, 8], [2, 4, 6],
-];
-
 export function legalActions(board: Board): number[] {
   const actions: number[] = [];
-  for (let i = 0; i < 9; i++) if (board[i] === 0) actions.push(i);
+  for (let i = 0; i < CELL_COUNT; i++) if (board[i] === 0) actions.push(i);
   return actions;
 }
 
 export function winner(board: Board): Player | 0 | null {
   for (const [a, b, c] of LINES) {
-    if (board[a] !== 0 && board[a] === board[b] && board[b] === board[c]) return board[a] as Player;
+    const v = board[a];
+    if ((v === 1 || v === -1) && v === board[b] && board[b] === board[c]) return v as Player;
   }
-  return legalActions(board).length === 0 ? 0 : null;
+  if (legalActions(board).length > 0) return null;
+  return 0;
 }
 
 export function applyAction(board: Board, action: number, player: Player): Board {
@@ -64,23 +78,23 @@ export class PolicyValueNet {
   nn: NeuralNetwork;
 
   constructor(seed = 1) {
-    this.nn = new NeuralNetwork([18, 32, 32, 10], seed);
+    this.nn = new NeuralNetwork([CELL_COUNT * 2, 32, 32, CELL_COUNT + 1], seed);
   }
 
   static input(board: Board, player: Player): number[] {
     const input: number[] = [];
-    for (let i = 0; i < 9; i++) input.push(board[i] === player ? 1 : 0);
-    for (let i = 0; i < 9; i++) input.push(board[i] === -player ? 1 : 0);
+    for (let i = 0; i < CELL_COUNT; i++) input.push(board[i] === player ? 1 : 0);
+    for (let i = 0; i < CELL_COUNT; i++) input.push(board[i] === -player ? 1 : 0);
     return input;
   }
 
   forward(board: Board, player: Player): PVOutput {
     const raw = this.nn.forward(PolicyValueNet.input(board, player));
-    const exps = raw.slice(0, 9).map((v) => Math.exp(Math.min(v, 30)));
+    const exps = raw.slice(0, CELL_COUNT).map((v) => Math.exp(Math.min(v, 30)));
     const sum = exps.reduce((a, b) => a + b, 0);
     return {
       probs: exps.map((v) => v / sum),
-      value: Math.tanh(raw[9]),
+      value: Math.tanh(raw[CELL_COUNT]),
     };
   }
 
@@ -193,13 +207,16 @@ export class MiniMaxSolver {
   private memo = new Map<string, { score: number; action: number }>();
 
   solve(board: Board, player: Player, rng?: () => number): { score: number; action: number } {
+    const result = this.search(board, player, -Infinity, Infinity);
+    if (!rng) return result;
+    const alternatives = this.bestActions(board, player, result.score);
+    return { score: result.score, action: alternatives[Math.floor(rng() * alternatives.length)] };
+  }
+
+  private search(board: Board, player: Player, alpha: number, beta: number): { score: number; action: number } {
     const key = boardKey(board, player);
     const cached = this.memo.get(key);
-    if (cached) {
-      if (!rng) return cached;
-      const alternatives = this.bestActions(board, player, cached.score);
-      return { score: cached.score, action: alternatives[Math.floor(rng() * alternatives.length)] };
-    }
+    if (cached) return cached;
     const terminal = winner(board);
     if (terminal !== null) {
       const result = { score: terminal === 0 ? 0 : terminal === player ? 1 : -1, action: -1 };
@@ -208,17 +225,28 @@ export class MiniMaxSolver {
     }
     let bestScore = -Infinity;
     let bestAction = -1;
-    for (const action of legalActions(board)) {
-      const child = this.solve(applyAction(board, action, player), -player as Player);
+    for (const action of this.orderedActions(board)) {
+      const child = this.search(applyAction(board, action, player), -player as Player, -beta, -alpha);
       const score = -child.score;
       if (score > bestScore) {
         bestScore = score;
         bestAction = action;
       }
+      alpha = Math.max(alpha, bestScore);
+      if (alpha >= beta) break;
     }
     const result = { score: bestScore, action: bestAction };
     this.memo.set(key, result);
     return result;
+  }
+
+  private orderedActions(board: Board): number[] {
+    const legal = legalActions(board);
+    const center = [5, 6, 9, 10];
+    return [
+      ...center.filter((action) => legal.includes(action)),
+      ...legal.filter((action) => !center.includes(action)),
+    ];
   }
   private bestActions(board: Board, player: Player, bestScore: number): number[] {
     const actions: number[] = [];
@@ -234,7 +262,7 @@ export function evaluateAgainstSolver(net: PolicyValueNet, solver: MiniMaxSolver
   const rng = mulberry32(seed);
   const result: EvalResult = { win: 0, draw: 0, loss: 0 };
   for (let game = 0; game < games; game++) {
-    let board = new Int8Array(9);
+    let board = new Int8Array(CELL_COUNT);
     let player: Player = 1;
     const netPlayer: Player = game % 2 === 0 ? 1 : -1;
     while (winner(board) === null) {
@@ -264,13 +292,13 @@ export function selfPlayIteration(net: PolicyValueNet, options: { games?: number
   const rng = mulberry32(options.seed ?? 1);
   const samples: TrainSample[] = [];
   for (let game = 0; game < games; game++) {
-    let board = new Int8Array(9);
+    let board = new Int8Array(CELL_COUNT);
     let player: Player = 1;
     const trajectory: { board: Board; player: Player; pi: number[] }[] = [];
     while (winner(board) === null) {
       const stats = runMCTS(board, player, net, simulations);
       const total = stats.reduce((sum, stat) => sum + stat.visits, 0);
-      const pi = Array.from({ length: 9 }, (_, action) => {
+      const pi = Array.from({ length: CELL_COUNT }, (_, action) => {
         const stat = stats.find((item) => item.action === action);
         return total > 0 && stat ? stat.visits / total : 0;
       });
