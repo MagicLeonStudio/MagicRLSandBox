@@ -125,11 +125,12 @@ npm run build
 ### v1.1 — Companion to Column Articles 9–11 (in development)
 - New Tiny AlphaZero demo (`/tutorials/alphago`): PUCT action statistics, network-prior vs MCTS-visit heatmaps, self-play training loss, and independent solver evaluation. Solver is evaluation-only and never supplies training data
 
-### v1.0 — Companion to Column Articles 6–8 (in development)
+### v1.0 — Companion to Column Articles 6–8 (Policy Gradient, TRPO/PPO, DQN)
+- New Policy Gradient demo (`/tutorials/policy-gradient`): softmax policy + REINFORCE with optional baseline on GridWorld (`src/dp/PolicyGrad.ts`); policy-map evolution during training, gradient-norm comparison (baseline on/off), per-step decomposition of grad-log-prob × (G − b)
+- New PPO demo (`/tutorials/ppo`): clip objective with dual-sign asymmetry and exact clipped-region shading, GAE λ spectrum with δ overlay
 - Rebuilt the DQN demo (`/tutorials/dqn`) as a pixel-mechanism lab: real 12x12 pixel observations, a pure-TypeScript two-conv DQN, live feature maps and action Q-values, replay-buffer/batch filmstrips, fixed-probe online/target trajectories, matched-seed three-way ablation, and greedy policy evaluation
 - Added a seeded CartPole stress lab (`src/dp/CartPoleDQN.ts` + `src/components/dqn/CartPoleStressDemo.tsx`): independent greedy evaluation every 1k training steps, one-seed and three-seed modes, and clear full-vs-ablation stability curves
-- New Policy Gradient demo (`/tutorials/policy-gradient`): softmax policy + REINFORCE with optional baseline on GridWorld (`src/dp/PolicyGrad.ts`); policy-map evolution during training, baseline on/off comparison of learning curves, per-step decomposition of grad-log-prob × (G − b)
-- Version bumped ahead of release: v1.0 ships when column articles 6–8 are complete
+- Fixes: REINFORCE baseline tracks the discounted return (scale-matched variance reduction); baseline toggle drives the displayed run
 
 ### v0.9 — Companion to Column Articles 4–5 (MC/TD, Q-learning/SARSA)
 - New MC vs TD demo (`/tutorials/mc-td`): identical trajectories fed to first-visit MC, TD(0) and TD(lambda); dual value-map comparison on a unified color scale; V(s0) learning curve with DP reference line; gamma / alpha / lambda sliders
