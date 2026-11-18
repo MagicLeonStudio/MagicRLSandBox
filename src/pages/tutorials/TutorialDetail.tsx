@@ -9,10 +9,8 @@ import PolicyGradientDemo from "@/components/PolicyGradientDemo";
 import PPODemo from "@/components/PPODemo";
 import DQNDemo from "@/components/DQNDemo";
 import AlphaZeroDemo from "@/components/AlphaZeroDemo";
-import ValueHeatmap from "@/components/ValueHeatmap";
+import MDPDemo from "@/components/MDPDemo";
 import { Button } from "@/components/ui/button";
-
-const ZERO25 = new Array(25).fill(0);
 
 export default function TutorialDetail() {
   const { id } = useParams();
@@ -53,11 +51,9 @@ export default function TutorialDetail() {
 
       {t.sections.map((sec, i) => (
         <section key={i} className="space-y-3">
-          <div className={wide ? "max-w-3xl" : undefined}>
-            <h2 className="text-xl font-semibold border-l-2 border-accent-yellow pl-3">{sec.heading}</h2>
-            <p className="text-foreground/90 leading-relaxed text-[15px] mt-3">{sec.body}</p>
-            {sec.formula && <TeX math={sec.formula} block />}
-          </div>
+          <h2 className="text-xl font-semibold border-l-2 border-accent-yellow pl-3">{sec.heading}</h2>
+          <p className="text-foreground/90 leading-relaxed text-[15px]">{sec.body}</p>
+          {sec.formula && <TeX math={sec.formula} block />}
           {sec.demo === "dp" && <DPDemo />}
           {sec.demo === "mctd" && <MCTDDemo />}
           {sec.demo === "cliff" && <CliffWalkDemo />}
@@ -65,11 +61,7 @@ export default function TutorialDetail() {
           {sec.demo === "ppo" && <PPODemo />}
           {sec.demo === "dqn" && <DQNDemo />}
           {sec.demo === "alphazero" && <AlphaZeroDemo />}
-          {sec.demo === "mdp" && (
-            <div className="flex justify-center bg-black/30 rounded-lg p-4">
-              <ValueHeatmap size={5} values={ZERO25} goal={24} showValues={false} />
-            </div>
-          )}
+          {sec.demo === "mdp" && <MDPDemo />}
         </section>
       ))}
     </div>
