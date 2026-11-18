@@ -40,8 +40,7 @@ function createAlgorithm(algorithm: Algorithm, stateSize: number, actionSize: nu
         discount: get("discount"),
         epsilonDecay: get("epsilonDecay"),
       });
-    case "dqn-grid":
-    case "dqn-snake":
+    case "dqn":
       return new DQN(stateSize, actionSize, {
         learningRate: get("learningRate"),
         epsilon: get("epsilon"),
@@ -49,8 +48,7 @@ function createAlgorithm(algorithm: Algorithm, stateSize: number, actionSize: nu
         replayBuffer: get("replayBuffer"),
         targetUpdate: get("targetUpdate"),
       });
-    case "a3c-grid":
-    case "a3c-snake":
+    case "a3c":
       return new A3C(stateSize, actionSize, {
         learningRate: get("learningRate"),
         gamma: get("gamma"),
@@ -1196,13 +1194,13 @@ function getCharacteristics(algoId: string): string[] {
       "Tabular value storage",
       "Safer in risky environments",
     ],
-    "dqn-grid": [
+    dqn: [
       "Deep neural network function approximation",
       "Experience replay for sample efficiency",
       "Target network for stable learning",
       "Breakthrough for high-dimensional inputs",
     ],
-    "a3c-grid": [
+    a3c: [
       "Parallel actor-learners",
       "Combined policy and value gradients",
       "No replay buffer needed",
@@ -1231,18 +1229,6 @@ function getCharacteristics(algoId: string): string[] {
       "Monotonic improvement guarantee",
       "Natural gradient descent",
       "Second-order optimization",
-    ],
-    "dqn-snake": [
-      "Deep neural network Q-learning",
-      "Experience replay buffer",
-      "Spatial reasoning for grid navigation",
-      "Target network stabilization",
-    ],
-    "a3c-snake": [
-      "Parallel exploration of strategies",
-      "Handles growing snake complexity",
-      "Shared global parameters",
-      "Robust to diverse play styles",
     ],
   };
   return chars[algoId] ?? ["Reinforcement Learning Algorithm"];
