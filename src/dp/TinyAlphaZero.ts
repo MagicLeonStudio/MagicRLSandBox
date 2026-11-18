@@ -345,3 +345,72 @@ export function selfPlayIteration(net: PolicyValueNet, options: { games?: number
   }
   return { samples: samples.length, loss: loss / Math.max(1, samples.length * epochs) };
 }
+
+/**
+ * SelfPlaySession —— 与 selfPlayIteration 相同的参数与规则，但按“一步一手”驱动，
+ * 供 UI 实时渲染自我对弈过程（棋盘 + 每手根节点统计）。
+ * 一次迭代 = totalGames 局全部下完，再调用 train() 做 epochs 轮策略价值训练。
+ */
+export class SelfPlaySession {
+  board: Board = new Int8Array(CELL_COUNT);
+  player: Player = 1;
+  gamesDone = 0;
+  readonly totalGames: number;
+  samples: TrainSample[] = [];
+  private trajectory: { board: Board; player: Player; pi: number[] }[] = [];
+  private readonly rng: () => number;
+  private readonly simulations: number;
+  private readonly net: PolicyValueNet;
+
+  constructor(net: PolicyValueNet, options: { games?: number; simulations?: number; seed?: number } = {}) {
+    this.net = net;
+    this.totalGames = options.games ?? 24;
+    this.simulations = options.simulations ?? 40;
+    this.rng = mulberry32(options.seed ?? 1);
+  }
+
+  get done(): boolean {
+    return this.gamesDone >= this.totalGames;
+  }
+
+  /** 下一手棋；返回当前局面的根节点统计（供 UI 展示），全部对局结束返回 null */
+  step(): MCTSActionStat[] | null {
+    if (this.done) return null;
+    const stats = runMCTS(this.board, this.player, this.net, this.simulations);
+    const total = stats.reduce((sum, stat) => sum + stat.visits, 0);
+    const pi = Array.from({ length: CELL_COUNT }, (_, action) => {
+      const stat = stats.find((item) => item.action === action);
+      return total > 0 && stat ? stat.visits / total : 0;
+    });
+    this.trajectory.push({ board: new Int8Array(this.board), player: this.player, pi });
+    let threshold = this.rng() * total;
+    let action = stats[stats.length - 1].action;
+    for (const stat of stats) {
+      threshold -= stat.visits;
+      if (threshold <= 0) { action = stat.action; break; }
+    }
+    this.board = applyAction(this.board, action, this.player);
+    this.player = -this.player as Player;
+    const outcome = winner(this.board);
+    if (outcome !== null) {
+      for (const state of this.trajectory) {
+        const z = outcome === 0 ? 0 : outcome === state.player ? 1 : -1;
+        this.samples.push({ board: state.board, player: state.player, pi: state.pi, z });
+      }
+      this.trajectory = [];
+      this.gamesDone++;
+      this.board = new Int8Array(CELL_COUNT);
+      this.player = 1;
+    }
+    return stats;
+  }
+
+  /** 用本迭代收集的样本做 epochs 轮训练；返回平均联合损失 */
+  train(epochs: number): number {
+    let loss = 0;
+    for (let epoch = 0; epoch < epochs; epoch++) {
+      for (const sample of this.samples) loss += this.net.train(sample, 0.001);
+    }
+    return loss / Math.max(1, this.samples.length * epochs);
+  }
+}
